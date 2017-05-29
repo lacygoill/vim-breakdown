@@ -94,21 +94,27 @@ fu! breakdown#draw(dir) abort
 
         " build location list data
         "
-        " We now use multibyte characters to draw the diagram.
-        " Because of this, `i.col` (which relies on the `col()` function), is
-        " no longer reliable (we would need to also use the `vcol()` function
-        " to get `i.vcol` in addition to `i.col`).
+        " For `setloclist()`, here's what the key `vcol` means:
+        " it's not a virtual column, it's just a flag; if it's non zero, then
+        " it means that the key `col` must be interpreted as a visual column,
+        " otherwise as a byte index.
         "
-        " Therefore, we add a big number (+20) to `i.col`.
-        " This makes sure that when we hit `]l` to move in the location list,
-        " the cursor is at the end of the line.
-        " The more lines we draw, the bigger this number should be, because the
-        " discrepancy between `col()` and `vcol()` increases.
-        " `30` should be big enough for most diagrams.
+        " We add:
+        "
+        "     (4 + (len(coords) - nr_lines + 1))*2
+        "
+        " … to the value of the key `col`, because every time we move up in
+        " the diagram, there's one branch more before the text we're going to
+        " write:    len(coords) - nr_lines + 1    to be precise
+        " For every branch before us, we must move our cursor one character to
+        " the right.
+        " And for some reason, we must multiply the result by 2.
+        " Because we're using multibyte characters?
         call add(loclist, {
                           \ 'bufnr': bufnr('%'),
                           \ 'lnum' : i.line + (a:dir == -1 ? -nr_lines - 1 : nr_lines + 1),
-                          \ 'col'  : i.col + 30,
+                          \ 'col'  : i.col + (4 + (len(coords) - nr_lines + 1))*2,
+                          \ 'vcol' : 1,
                           \ })
         let nr_lines -= 1
     endfor
