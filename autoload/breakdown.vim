@@ -94,27 +94,24 @@ fu! breakdown#draw(dir) abort
 
         " build location list data
         "
-        " For `setloclist()`, here's what the key `vcol` means:
-        " it's not a virtual column, it's just a flag; if it's non zero, then
-        " it means that the key `col` must be interpreted as a visual column,
-        " otherwise as a byte index.
-        "
         " We add:
         "
         "     (4 + (len(coords) - nr_lines + 1))*2
         "
         " … to the value of the key `col`, because every time we move up in
         " the diagram, there's one branch more before the text we're going to
-        " write:    len(coords) - nr_lines + 1    to be precise
+        " write:
+        "         len(coords) - nr_lines + 1
+        "
+        " … to be precise.
+        "
         " For every branch before us, we must move our cursor one character to
-        " the right.
-        " And for some reason, we must multiply the result by 2.
-        " Because we're using multibyte characters?
+        " the right. And we must multiply the result by 2, because we're using
+        " multibyte characters.
         call add(loclist, {
-                          \ 'bufnr': bufnr('%'),
-                          \ 'lnum' : i.line + (a:dir == -1 ? -nr_lines - 1 : nr_lines + 1),
-                          \ 'col'  : i.col + (4 + (len(coords) - nr_lines + 1))*2,
-                          \ 'vcol' : 1,
+                          \ 'bufnr' : bufnr('%'),
+                          \ 'lnum'  : i.line + (a:dir == -1 ? -nr_lines - 1 : nr_lines + 1),
+                          \ 'col'   : i.col + (4 + (len(coords) - nr_lines + 1))*2,
                           \ })
         let nr_lines -= 1
     endfor
