@@ -28,7 +28,7 @@ endfu
 "}}}
 " ―――――――――――――――― draw "{{{
 
-fu! breakdown#draw(dir) abort
+fu! breakdown#draw(dir, align) abort
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
@@ -99,7 +99,7 @@ fu! breakdown#draw(dir) abort
         "     (4 + (len(coords) - nr_lines + 1))*2
         "
         " … to the value of the key `col`, because every time we move up in
-        " the diagram, there's one branch more before the text we're going to
+        " the diagram, there's one more branch before the text we're going to
         " write:
         "         len(coords) - nr_lines + 1
         "
