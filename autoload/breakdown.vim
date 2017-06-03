@@ -363,8 +363,7 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
             " of the diagram; the one above/below `└`/`┌`.
 
             let i = index(w:bd_marks.coords, coord)
-
-            let col  = w:bd_marks.coords[i+1].col + ((len(w:bd_marks.coords)/2 - hm_to_draw))*2
+            let col  = w:bd_marks.coords[i+1].col + ((len(w:bd_marks.coords)/2 - hm_to_draw))*multiplier
 "                      │                            │
 "                      │                            └── before `└`/`┌`, there could be some `│`:
 "                      │                                add 2 bytes for each of them

@@ -31,9 +31,9 @@ if empty(mapcheck('m{', 'n')) && !hasmapto('<plug>(breakdown_aligned_above)', 'n
 endif
 nno <silent> <plug>(breakdown_aligned_above)        :<c-u>call breakdown#main(-1,1)<cr>
 
-if empty(mapcheck('m}', 'n')) && !hasmapto('<plug>(breakdown#aligned_below)', 'n')
-    nmap m}                   <plug>(breakdown#aligned_below)
+if empty(mapcheck('m}', 'n')) && !hasmapto('<plug>(breakdown_aligned_below)', 'n')
+    nmap m}                   <plug>(breakdown_aligned_below)
 endif
-nno <silent> <plug>(breakdown#aligned_below)        :<c-u>call breakdown#main(0,1)<cr>
+nno <silent> <plug>(breakdown_aligned_below)        :<c-u>call breakdown#main(0,1)<cr>
 
 let &cpo = s:save_cpo
