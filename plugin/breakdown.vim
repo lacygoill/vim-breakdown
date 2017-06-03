@@ -3,6 +3,7 @@ if exists('g:loaded_breakdown') || &compatible || v:version < 700
 endif
 let g:loaded_breakdown = 1
 
+<<<<<<< HEAD
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -37,3 +38,10 @@ endif
 nno <silent> <plug>(breakdown_aligned_below)        :<c-u>call breakdown#main(0,1)<cr>
 
 let &cpo = s:save_cpo
+=======
+nno <silent> m(      :<c-u>call breakdown#draw(-1, 0)<CR>
+nno <silent> m)      :<c-u>call breakdown#draw(0, 0)<CR>
+
+nno <silent> m{      :<c-u>call breakdown#draw(-1, 1)<CR>
+nno <silent> m}      :<c-u>call breakdown#draw(0, 1)<CR>
+>>>>>>> parent of 248e2e4... add support for aligned diagram
