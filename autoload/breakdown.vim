@@ -100,7 +100,7 @@ endfu
 "}}}
 " ―――――――――――――――― main "{{{
 
-fu! breakdown#sort(x,y) abort
+fu! s:sort(x,y) abort
     return a:x.col - a:y.col
 endfu
 
@@ -136,7 +136,7 @@ fu! breakdown#main(dir, align) abort
     " we could remove the `breakdown#sort()` function and replace it with
     " a lambda expression:
     "     call sort(w:bd_marks.coords, { x,y -> x.col - y.col })
-    call sort(w:bd_marks.coords, 'breakdown#sort')
+    call sort(w:bd_marks.coords, 's:sort')
 
     " In a diagram in which the descriptions are aligned, every 2 consecutive
     " marked characters stand for one piece of the latter.
@@ -205,7 +205,7 @@ fu! breakdown#main(dir, align) abort
         call breakdown#draw(align, dir, coord, hm_to_draw)
 
         " populate the location list
-        call breakdown#populate_loclist(align, coord, dir, hm_to_draw)
+        call s:populate_loclist(align, coord, dir, hm_to_draw)
 
         let hm_to_draw -= 1
     endfor
@@ -304,7 +304,7 @@ endfu
 "}}}
 " ―――――――――――――――― populate_loclist "{{{
 
-fu! breakdown#populate_loclist(align, coord, dir, hm_to_draw) abort
+fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
     let [ align, coord, dir, hm_to_draw ] = [ a:align, a:coord, a:dir, a:hm_to_draw ]
 
     " Example of aligned diagram:
