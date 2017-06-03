@@ -1,3 +1,6 @@
+let s:save_cpo = &cpo
+set cpo&vim
+
 " ―――――――――――――――― clear "{{{
 
 fu! breakdown#clear() abort
@@ -83,13 +86,13 @@ fu! breakdown#draw(align, dir, coord, hm_to_draw)
             for i in range(1, hm_to_draw + 1)
                 norm! kr│
             endfor
-            exe 'norm! R┌── '
+            exe 'norm! R┌─ '
         else
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
                 norm! jr│
             endfor
-            exe 'norm! R└── '
+            exe 'norm! R└─ '
         endif
     endif
 endfu
@@ -339,14 +342,16 @@ fu! breakdown#populate_loclist(align, coord, dir, hm_to_draw) abort
 "           The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
 "           Because with `coord.col`, we already added one byte for each of them.
 
-            let col += 3*(w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col) + 4
+            let col += 3*(w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col) + (3*1) + 1
 "                      │                                                            │
 "                      │                                                            └── add 4 as a fixed offset
+"                      │                                                                1 drawing character + 1 space
 "                      └── add 3 bytes for every character in the `└──…` segment
         else
-            let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + 10
+            let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (3*2)+1
 "                      │           │                                           │
-"                      │           │                                           └── add 10 as a fixed offset
+"                      │           │                                           └── add 7 as a fixed offset
+"                      │           │                                               2 drawing characters + 1 space
 "                      │           └── before `└`, there could be some `│`: add 2 bytes for each of them
 "                      └── number of bytes up to `└`/marked character
         endif
@@ -359,3 +364,5 @@ fu! breakdown#populate_loclist(align, coord, dir, hm_to_draw) abort
 endfu
 
 "}}}
+
+let &cpo = s:cpo_save
