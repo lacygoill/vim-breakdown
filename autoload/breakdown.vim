@@ -215,9 +215,9 @@ fu! breakdown#main(dir, align) abort
 "                                                   in the previous for loop
     endif
 
-    " make the motion in the location list repeatable with `;` and `,`
-    sil! norm [L
-    sil! norm [l
+    if exists('#User#BreakdownPost')
+        doautocmd <nomodeline> User BreakdownPost
+    endif
 
     " clear match
     call breakdown#clear()
@@ -365,4 +365,4 @@ endfu
 
 "}}}
 
-let &cpo = s:cpo_save
+let &cpo = s:save_cpo
