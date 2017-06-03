@@ -47,6 +47,30 @@ endfu
 fu! breakdown#draw(align, dir, coord, hm_to_draw)
     let [ align, dir, coord, hm_to_draw ] = [ a:align, a:dir, a:coord, a:hm_to_draw ]
 
+    let characters = extend(
+                   \         get(
+                   \              b:,
+                   \              'breakdown_characters',
+                   \              get(g:, 'breakdown#characters', {})
+                   \            ),
+                   \
+                   \         {
+                   \            'hor'        : '─',
+                   \            'vert'       : '│',
+                   \            'down_right' : '┌',
+                   \            'vert_left'  : '┤',
+                   \            'up_right'   : '└',
+                   \          },
+                   \
+                   \         'keep'
+                   \       )
+
+    let hor        = characters.hor
+    let vert       = characters.vert
+    let down_right = characters.down_right
+    let vert_left  = characters.vert_left
+    let up_right   = characters.up_right
+
     " reposition cursor before drawing the next piece
     exe 'norm! '. coord.line .'G'. coord.col . '|'
 
@@ -61,38 +85,38 @@ fu! breakdown#draw(align, dir, coord, hm_to_draw)
 
         if dir == -1
             " draw `┌───┤`
-            exe 'norm! kR┌'.repeat('─', w).'┤'
+            exe 'norm! kR'.down_right.repeat(hor, w).vert_left
             " draw the `│` column
             for i in range(1, hm_to_draw - 1)
-                norm! kr│
+                exe 'norm! kr'.vert
             endfor
             " draw `┌────`
-            exe 'norm! kR┌'.repeat('─', ww)
+            exe 'norm! kR'.down_right.repeat(hor, ww)
 
         else
             " draw `└───┤`
-            exe 'norm! jR└'.repeat('─', w).'┤'
+            exe 'norm! jR'.up_right.repeat(hor, w).vert_left
             " draw the `│` column
             for i in range(1, hm_to_draw - 1)
-                norm! jr│
+                exe 'norm! jr'.vert
             endfor
             " draw `└────`
-            exe 'norm! jR└'.repeat('─', ww).' '
+            exe 'norm! jR'.up_right.repeat(hor, ww).' '
         endif
 
     else
         if dir == -1
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
-                norm! kr│
+                exe 'norm! kr'.vert
             endfor
-            exe 'norm! R┌─ '
+            exe 'norm! R'.down_right.hor.' '
         else
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
-                norm! jr│
+                exe 'norm! jr'.vert
             endfor
-            exe 'norm! R└─ '
+            exe 'norm! R'.up_right.hor.' '
         endif
     endif
 endfu
