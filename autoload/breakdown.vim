@@ -1,6 +1,3 @@
-let s:save_cpo = &cpo
-set cpo&vim
-
 " ―――――――――――――――― clear "{{{
 
 fu! breakdown#clear() abort
@@ -13,12 +10,24 @@ endfu
 "}}}
 " ―――――――――――――――― comment "{{{
 
-fu! s:comment(what, where, dir) abort
-    let nr_lines = len(w:bd_marks.coords)
+" This function is called once or twice per line of the diagram.
+" Twice if we're in a buffer whose commentstring has 2 parts.
+"
+" Example:    <!-- html text -->
+"             ^              ^
+"             first part     2nd part
+"
+" Its purpose is to comment each line of the diagram.
+" `what` is either the lhs or the rhs of a commentstring.
 
+fu! s:comment(what, where, dir, hm_to_draw) abort
+    " Before beginning commenting the lines of the diagram, make sure the cursor
+    " is on the line we're describing.
     exe 'norm! '. w:bd_marks.coords[0].line .'G'
 
-    for j in range(0, nr_lines)
+    " iterate over the lines of the diagram
+    for i in range(0, a:hm_to_draw)
+        " move the cursor in the right direction
         exe (a:dir == -1 ? '-' : '+')
 
         let replacement = a:where ==# 'right'
@@ -31,34 +40,9 @@ endfu
 "}}}
 " ―――――――――――――――― draw "{{{
 
-<<<<<<< HEAD
 " This function draws a piece of the diagram.
 fu! breakdown#draw(align, dir, coord, hm_to_draw)
     let [ align, dir, coord, hm_to_draw ] = [ a:align, a:dir, a:coord, a:hm_to_draw ]
-
-    let characters = extend(
-                   \         get(
-                   \              b:,
-                   \              'breakdown_characters',
-                   \              get(g:, 'breakdown#characters', {})
-                   \            ),
-                   \
-                   \         {
-                   \            'hor'        : '─',
-                   \            'vert'       : '│',
-                   \            'down_right' : '┌',
-                   \            'vert_left'  : '┤',
-                   \            'up_right'   : '└',
-                   \          },
-                   \
-                   \         'keep'
-                   \       )
-
-    let hor        = characters.hor
-    let vert       = characters.vert
-    let down_right = characters.down_right
-    let vert_left  = characters.vert_left
-    let up_right   = characters.up_right
 
     " reposition cursor before drawing the next piece
     exe 'norm! '. coord.line .'G'. coord.col . '|'
@@ -74,38 +58,38 @@ fu! breakdown#draw(align, dir, coord, hm_to_draw)
 
         if dir == -1
             " draw `┌───┤`
-            exe 'norm! kR'.down_right.repeat(hor, w).vert_left
+            exe 'norm! kR┌'.repeat('─', w).'┤'
             " draw the `│` column
             for i in range(1, hm_to_draw - 1)
-                exe 'norm! kr'.vert
+                norm! kr│
             endfor
             " draw `┌────`
-            exe 'norm! kR'.down_right.repeat(hor, ww)
+            exe 'norm! kR┌'.repeat('─', ww)
 
         else
             " draw `└───┤`
-            exe 'norm! jR'.up_right.repeat(hor, w).vert_left
+            exe 'norm! jR└'.repeat('─', w).'┤'
             " draw the `│` column
             for i in range(1, hm_to_draw - 1)
-                exe 'norm! jr'.vert
+                norm! jr│
             endfor
             " draw `└────`
-            exe 'norm! jR'.up_right.repeat(hor, ww).' '
+            exe 'norm! jR└'.repeat('─', ww).' '
         endif
 
     else
         if dir == -1
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
-                exe 'norm! kr'.vert
+                norm! kr│
             endfor
-            exe 'norm! R'.down_right.hor.' '
+            exe 'norm! R┌── '
         else
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
-                exe 'norm! jr'.vert
+                norm! jr│
             endfor
-            exe 'norm! R'.up_right.hor.' '
+            exe 'norm! R└── '
         endif
     endif
 endfu
@@ -113,36 +97,35 @@ endfu
 "}}}
 " ―――――――――――――――― main "{{{
 
-fu! s:sort(x,y) abort
-    return a:x.col - a:y.col
-endfu
-
 fu! breakdown#main(dir, align) abort
-=======
-fu! breakdown#draw(dir, align) abort
->>>>>>> parent of 248e2e4... add support for aligned diagram
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
     endif
 
+    let [ dir, align ] = [ a:dir, a:align ]
+
+    " if we want to draw the diagram in which the items are aligned, the number
+    " of marked characters must be even, not odd
+    if align && len(w:bd_marks.coords) % 2 == 1
+        echohl ErrorMsg
+        echo '[breakdown] number of marked characters must be even'
+        echohl None
+        return
+    endif
+
     " make sure 've' allows us to draw freely
     " also, make sure 'tw' and 'wm' don't break a long line
-    let [ve_save, tw_save, wm_save] = [&ve, &l:tw, &l:wm]
+    let [ ve_save, tw_save, wm_save ] = [ &ve, &l:tw, &l:wm ]
     setl ve=all tw=0 wm=0
 
-<<<<<<< HEAD
     " initialize empty location list
     let w:bd_marks.loclist = []
 
     " we sort the coordinates according to their column number, because
     " there's no guarantee that we marked the characters in order from left to
     " right
-    " NOTE:
-    " we could remove the `breakdown#sort()` function and replace it with
-    " a lambda expression:
-    "     call sort(w:bd_marks.coords, { x,y -> x.col - y.col })
-    call sort(w:bd_marks.coords, 's:sort')
+    call sort(w:bd_marks.coords, {x,y -> x.col - y.col})
 
     " In a diagram in which the descriptions are aligned, every 2 consecutive
     " marked characters stand for one piece of the latter.
@@ -177,22 +160,24 @@ fu! breakdown#draw(dir, align) abort
 
     " How Many lines of the diagram are still TO be DRAWn
     let hm_to_draw = len(coords_to_process)
-=======
-    let coords   = w:bd_marks.coords
-    let nr_lines = len(coords)
->>>>>>> parent of 248e2e4... add support for aligned diagram
 
     " make sure the cursor is on the line containing marked characters
-    exe 'norm! '.coords[0].line.'G'
+    exe 'norm! '.w:bd_marks.coords[0].line.'G'
 
     " open enough new lines to draw diagram
-    call append(line('.') + a:dir, repeat([''], nr_lines + 1))
+    call append(line('.') + dir, repeat([''], hm_to_draw + 1))
 
-    " if we open lines above, the addresses of the lines must be
-    " updated, incremented with `nr_lines + 1`
-    if a:dir == -1
-        for coord in w:bd_marks.coords
-            let coord.line = coord.line + nr_lines + 1
+    " if we've just opened new lines above (instead of below) …
+    if dir == -1
+        " … the address of the line of the marked characters must be updated
+        for coord in coords_to_process + w:bd_marks.coords
+"                                      │
+"                                      └── `coords_to_process` is only a copy
+"                                          of (a subset of) `w:bd_marks.coords`
+"                                          we also need to update the original coordinates
+
+            " … increment it with `len(coords_to_process) + 1`
+            let coord.line += len(coords_to_process) + 1
         endfor
     endif
 
@@ -200,91 +185,42 @@ fu! breakdown#draw(dir, align) abort
     " except in a markdown buffer, because a diagram won't cause errors in
     " a note file, so there's no need to
     if !empty(&cms) && &ft !=# 'markdown'
-        let [cms_left, cms_right] = split(&cms, '%s', 1)
-        call s:comment(cms_left, 'left', a:dir)
+        let [ cms_left, cms_right ] = split(&cms, '%s', 1)
+        call s:comment(cms_left, 'left', dir, hm_to_draw)
     endif
 
-    let loclist = []
-    " we sort the coordinates according to their column number, because
-    " there's no guarantee that we marked the characters in order from left to
-    " right
+    for coord in coords_to_process
+        " draw a piece of the diagram
+        call breakdown#draw(align, dir, coord, hm_to_draw)
 
-<<<<<<< HEAD
         " populate the location list
-        call s:populate_loclist(align, coord, dir, hm_to_draw)
-=======
-    for i in sort(coords, {x,y -> x.col - y.col})
-        " position cursor before drawing
-        if a:dir == -1
-            exe 'norm! '. (i.line - nr_lines - 1) .'G'
-        else
-            exe 'norm! '. i.line .'Gj'
-        endif
-        exe 'norm! '. i.col . '|'
->>>>>>> parent of 248e2e4... add support for aligned diagram
+        call breakdown#populate_loclist(align, coord, dir, hm_to_draw)
 
-        " draw a branch of the diagram
-        if a:dir == -1
-            exe 'norm! R┌── '
-            norm! 3h
-            for j in range(1, nr_lines)
-                norm! jr│
-            endfor
-        else
-            for j in range(1, nr_lines)
-                norm! r│j
-            endfor
-            exe 'norm! R└── '
-        endif
-
-        " build location list data
-        "
-        " We add:
-        "
-        "     (4 + (len(coords) - nr_lines + 1))*2
-        "
-        " … to the value of the key `col`, because every time we move up in
-        " the diagram, there's one more branch before the text we're going to
-        " write:
-        "         len(coords) - nr_lines + 1
-        "
-        " … to be precise.
-        "
-        " For every branch before us, we must move our cursor one character to
-        " the right. And we must multiply the result by 2, because we're using
-        " multibyte characters.
-        call add(loclist, {
-                          \ 'bufnr' : bufnr('%'),
-                          \ 'lnum'  : i.line + (a:dir == -1 ? -nr_lines - 1 : nr_lines + 1),
-                          \ 'col'   : i.col + (4 + (len(coords) - nr_lines + 1))*2,
-                          \ })
-        let nr_lines -= 1
+        let hm_to_draw -= 1
     endfor
 
-    " if there's a commentstring, and has a non empty right part,
+    " set location list
+    call setloclist(0, w:bd_marks.loclist)
+
+    " if there's a commentstring which has a non empty right part,
     " comment the right side of the diagram lines
     if exists('cms_right') && !empty(cms_right)
-        call s:comment(cms_right, 'right', a:dir)
+        call s:comment(cms_right, 'right', dir, len(coords_to_process))
+"                                               │
+"                                               └── can't use `hm_to_draw` again
+"                                                   because the variable has been decremented
+"                                                   in the previous for loop
     endif
-
-<<<<<<< HEAD
-    if exists('#User#BreakdownPost')
-        doautocmd <nomodeline> User BreakdownPost
-    endif
-=======
-    " set location list
-    call setloclist(0, loclist)
 
     " make the motion in the location list repeatable with `;` and `,`
-    sil! norm ]l[l
-    " position cursor on first entry
-    lfirst
->>>>>>> parent of 248e2e4... add support for aligned diagram
+    sil! norm [L
+    sil! norm [l
 
     " clear match
     call breakdown#clear()
 
-    let [&ve, &l:tw, &l:wm] = [ve_save, tw_save, wm_save]
+    " restore the original values of the options we changed
+    let [ &ve, &l:tw, &l:wm ] = [ ve_save, tw_save, wm_save ]
 endfu
 
 "}}}
@@ -305,7 +241,7 @@ fu! breakdown#mark() abort
             " we don't want to add a new match besides the old one
             call matchdelete(w:bd_marks.id)
             " and add a bar at the end of the pattern, to prepare for a new
-            " branch
+            " piece
             let w:bd_marks.pattern .= '|'
         endif
     endif
@@ -332,10 +268,10 @@ fu! breakdown#mark() abort
     " Otherwise, if we're marking a character on a different line, reset
     " completely the list of coordinates.
 
-        let w:bd_marks.coords  = [{
-                                  \ 'line' : line('.'),
-                                  \ 'col'  : virtcol('.'),
-                                  \ }]
+        let w:bd_marks.coords = [{
+                                 \ 'line' : line('.'),
+                                 \ 'col'  : virtcol('.'),
+                                 \ }]
     endif
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
@@ -355,10 +291,9 @@ fu! breakdown#mark() abort
 endfu
 
 "}}}
-<<<<<<< HEAD
 " ―――――――――――――――― populate_loclist "{{{
 
-fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
+fu! breakdown#populate_loclist(align, coord, dir, hm_to_draw) abort
     let [ align, coord, dir, hm_to_draw ] = [ a:align, a:coord, a:dir, a:hm_to_draw ]
 
     " Example of aligned diagram:
@@ -393,7 +328,8 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
             " of the diagram; the one above/below `└`/`┌`.
 
             let i = index(w:bd_marks.coords, coord)
-            let col  = w:bd_marks.coords[i+1].col + ((len(w:bd_marks.coords)/2 - hm_to_draw))*multiplier
+
+            let col  = w:bd_marks.coords[i+1].col + ((len(w:bd_marks.coords)/2 - hm_to_draw))*2
 "                      │                            │
 "                      │                            └── before `└`/`┌`, there could be some `│`:
 "                      │                                add 2 bytes for each of them
@@ -403,16 +339,14 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
 "           The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
 "           Because with `coord.col`, we already added one byte for each of them.
 
-            let col += 3*(w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col) + (3*1) + 1
+            let col += 3*(w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col) + 4
 "                      │                                                            │
 "                      │                                                            └── add 4 as a fixed offset
-"                      │                                                                1 drawing character + 1 space
 "                      └── add 3 bytes for every character in the `└──…` segment
         else
-            let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (3*2)+1
+            let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + 10
 "                      │           │                                           │
-"                      │           │                                           └── add 7 as a fixed offset
-"                      │           │                                               2 drawing characters + 1 space
+"                      │           │                                           └── add 10 as a fixed offset
 "                      │           └── before `└`, there could be some `│`: add 2 bytes for each of them
 "                      └── number of bytes up to `└`/marked character
         endif
@@ -425,8 +359,3 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
 endfu
 
 "}}}
-
-let &cpo = s:save_cpo
-=======
-
->>>>>>> parent of 248e2e4... add support for aligned diagram
