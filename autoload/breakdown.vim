@@ -100,6 +100,10 @@ endfu
 "}}}
 " ―――――――――――――――― main "{{{
 
+fu! breakdown#sort(x,y) abort
+    return a:x.col - a:y.col
+endfu
+
 fu! breakdown#main(dir, align) abort
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
@@ -128,7 +132,11 @@ fu! breakdown#main(dir, align) abort
     " we sort the coordinates according to their column number, because
     " there's no guarantee that we marked the characters in order from left to
     " right
-    call sort(w:bd_marks.coords, {x,y -> x.col - y.col})
+    " NOTE:
+    " we could remove the `breakdown#sort()` function and replace it with
+    " a lambda expression:
+    "     call sort(w:bd_marks.coords, { x,y -> x.col - y.col })
+    call sort(w:bd_marks.coords, 'breakdown#sort')
 
     " In a diagram in which the descriptions are aligned, every 2 consecutive
     " marked characters stand for one piece of the latter.
