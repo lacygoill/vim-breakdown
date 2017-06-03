@@ -64,7 +64,7 @@ fu! breakdown#draw(align, dir, coord, hm_to_draw)
                 norm! kr│
             endfor
             " draw `┌────`
-            exe 'norm! kR┌'.repeat('─', ww)
+            exe 'norm! kR┌'.repeat('─', ww).' '
 
         else
             " draw `└───┤`
