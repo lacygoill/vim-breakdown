@@ -25,14 +25,17 @@ fu! s:comment(what, where, dir, hm_to_draw) abort
     " is on the line we're describing.
     exe 'norm! '. w:bd_marks.coords[0].line .'G'
 
+    let indent = repeat(' ', indent('.'))
+
     " iterate over the lines of the diagram
     for i in range(0, a:hm_to_draw)
         " move the cursor in the right direction
         exe (a:dir == -1 ? '-' : '+')
 
-        let replacement = a:where ==# 'right'
-                        \   ? substitute(getline('.'), '$', ' '.a:what, '')
-                        \   : a:what
+        let replacement = a:where ==# 'left'
+                        \   ? indent . a:what
+                        \   : substitute(getline('.'), '$', ' '.a:what, '')
+
         call setline(line('.'), replacement)
     endfor
 endfu
