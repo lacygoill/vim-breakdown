@@ -204,15 +204,16 @@ fu! breakdown#main(dir, align) abort
 
     " set location list
     call setloclist(0, w:bd_marks.loclist)
+    call setloclist(0, [], 'a', {'title': 'Breakdown'})
 
     " if there's a commentstring which has a non empty right part,
     " comment the right side of the diagram lines
     if exists('cms_right') && !empty(cms_right)
         call s:comment(cms_right, 'right', dir, len(coords_to_process))
-"                                               │
-"                                               └── can't use `hm_to_draw` again
-"                                                   because the variable has been decremented
-"                                                   in the previous for loop
+    "                                           │
+    "                                           └── can't use `hm_to_draw` again
+    "                                               because the variable has been decremented
+    "                                               in the previous for loop
     endif
 
     " make the motion in the location list repeatable with `;` and `,`
@@ -333,25 +334,25 @@ fu! breakdown#populate_loclist(align, coord, dir, hm_to_draw) abort
             let i = index(w:bd_marks.coords, coord)
 
             let col  = w:bd_marks.coords[i+1].col + ((len(w:bd_marks.coords)/2 - hm_to_draw))*2
-"                      │                            │
-"                      │                            └── before `└`/`┌`, there could be some `│`:
-"                      │                                add 2 bytes for each of them
-"                      │
-"                      └── byte index of the next marked character (the one above/below `┤`)
-"           NOTE:
-"           The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
-"           Because with `coord.col`, we already added one byte for each of them.
+            "          │                            │
+            "          │                            └── before `└`/`┌`, there could be some `│`:
+            "          │                                add 2 bytes for each of them
+            "          │
+            "          └── byte index of the next marked character (the one above/below `┤`)
+            " NOTE:
+            " The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
+            " Because with `coord.col`, we already added one byte for each of them.
 
             let col += 3*(w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col) + (3*1)+1
-"                      │                                                            │
-"                      │                                                            └── add 4 as a fixed offset
-"                      └── add 3 bytes for every character in the `└──…` segment
+            "          │                                                            │
+            "          │                                                            └── add 4 as a fixed offset
+            "          └── add 3 bytes for every character in the `└──…` segment
         else
             let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (3*2)+1
-"                      │           │                                           │
-"                      │           │                                           └── add 7 as a fixed offset
-"                      │           └── before `└`, there could be some `│`: add 2 bytes for each of them
-"                      └── number of bytes up to `└`/marked character
+        "              │           │                                           │
+        "              │           │                                           └── add 7 as a fixed offset
+        "              │           └── before `└`, there could be some `│`: add 2 bytes for each of them
+        "              └── number of bytes up to `└`/marked character
         endif
 
         call add(w:bd_marks.loclist, {
