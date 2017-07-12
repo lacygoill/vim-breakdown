@@ -1,4 +1,4 @@
-" ―――――――――――――――― clear "{{{
+" clear "{{{
 
 fu! breakdown#clear() abort
     if exists('w:bd_marks')
@@ -8,7 +8,7 @@ fu! breakdown#clear() abort
 endfu
 
 "}}}
-" ―――――――――――――――― comment "{{{
+" comment "{{{
 
 " This function is called once or twice per line of the diagram.
 " Twice if we're in a buffer whose commentstring has 2 parts.
@@ -41,10 +41,10 @@ fu! s:comment(what, where, dir, hm_to_draw) abort
 endfu
 
 "}}}
-" ―――――――――――――――― draw "{{{
+" draw "{{{
 
 " This function draws a piece of the diagram.
-fu! breakdown#draw(align, dir, coord, hm_to_draw)
+fu! s:draw(align, dir, coord, hm_to_draw)
     let [ align, dir, coord, hm_to_draw ] = [ a:align, a:dir, a:coord, a:hm_to_draw ]
 
     " reposition cursor before drawing the next piece
@@ -98,9 +98,9 @@ fu! breakdown#draw(align, dir, coord, hm_to_draw)
 endfu
 
 "}}}
-" ―――――――――――――――― main "{{{
+" expand "{{{
 
-fu! breakdown#main(dir, align) abort
+fu! breakdown#expand(dir, align) abort
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
@@ -194,10 +194,10 @@ fu! breakdown#main(dir, align) abort
 
     for coord in coords_to_process
         " draw a piece of the diagram
-        call breakdown#draw(align, dir, coord, hm_to_draw)
+        call s:draw(align, dir, coord, hm_to_draw)
 
         " populate the location list
-        call breakdown#populate_loclist(align, coord, dir, hm_to_draw)
+        call s:populate_loclist(align, coord, dir, hm_to_draw)
 
         let hm_to_draw -= 1
     endfor
@@ -228,7 +228,7 @@ fu! breakdown#main(dir, align) abort
 endfu
 
 "}}}
-" ―――――――――――――――― mark "{{{
+" mark "{{{
 
 fu! breakdown#mark() abort
     " if `w:bd_marks` doesn't exist, initialize it
@@ -295,9 +295,9 @@ fu! breakdown#mark() abort
 endfu
 
 "}}}
-" ―――――――――――――――― populate_loclist "{{{
+" populate_loclist "{{{
 
-fu! breakdown#populate_loclist(align, coord, dir, hm_to_draw) abort
+fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
     let [ align, coord, dir, hm_to_draw ] = [ a:align, a:coord, a:dir, a:hm_to_draw ]
 
     " Example of aligned diagram:
@@ -349,10 +349,10 @@ fu! breakdown#populate_loclist(align, coord, dir, hm_to_draw) abort
             "          └── add 3 bytes for every character in the `└──…` segment
         else
             let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (3*2)+1
-        "              │           │                                           │
-        "              │           │                                           └── add 7 as a fixed offset
-        "              │           └── before `└`, there could be some `│`: add 2 bytes for each of them
-        "              └── number of bytes up to `└`/marked character
+            "          │           │                                           │
+            "          │           │                                           └── add 7 as a fixed offset
+            "          │           └── before `└`, there could be some `│`: add 2 bytes for each of them
+            "          └── number of bytes up to `└`/marked character
         endif
 
         call add(w:bd_marks.loclist, {
