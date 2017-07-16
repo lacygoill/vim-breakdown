@@ -184,9 +184,6 @@ fu! breakdown#expand(dir, align) abort
 
             " … increment it with `len(coords_to_process) + 1`
             let coord.line += len(coords_to_process) + 1
-            " FIXME:
-            " now, we won't be able to re-use these coordinates, if we undo
-            " and re-try to expand the diagram
         endfor
     endif
 
