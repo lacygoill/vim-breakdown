@@ -1,9 +1,9 @@
 " clear "{{{
 
 fu! breakdown#clear() abort
-    if exists('w:bd_marks')
+    if exists('w:bd_marks.id')
         call matchdelete(w:bd_marks.id)
-        unlet w:bd_marks
+        call remove(w:bd_marks, 'id')
     endif
 endfu
 
@@ -107,6 +107,9 @@ fu! breakdown#expand(dir, align) abort
     endif
 
     let [ dir, align ] = [ a:dir, a:align ]
+    " we save the coordinates, because we may update them during the expansion
+    " it happens when the diagram must be drawn above (not below)
+    let coords_save = deepcopy(w:bd_marks.coords)
 
     " if we want to draw the diagram in which the items are aligned, the number
     " of marked characters must be even, not odd
@@ -138,27 +141,27 @@ fu! breakdown#expand(dir, align) abort
     let coords_to_process = align
                           \   ? filter(deepcopy(w:bd_marks.coords), 'v:key % 2 == 0')
                           \   : deepcopy(w:bd_marks.coords)
-"                               │
-"                               └── why `deepcopy()`?
-"                               because we may update the line coordinates, later, inside `coords_to_process`
-"                               (if we open some lines above)
-"                               and if we do, without `deepcopy()`, it would also affect `w:bd_marks.coords`
-"                               because they would be the same list:
-"
-"                                       echo w:bd_marks.coords is coords_to_process    →    1
-"
-"                               without this separation, we would need to remove `coords_to_process` from
-"                               the next `for` loop:
-"
-"                                       for coord in coords_to_process + w:bd_marks.coords
-"                                       →
-"                                       for coord in w:bd_marks.coords
-"
-"                               … to avoid that the elements are incremented twice, instead of once
-"
-"                               but even then, the plugin wouldn't work as expected,
-"                               because when we would try to draw an aligned diagram above a line,
-"                               it would be too high
+    "                           │
+    "                           └── why `deepcopy()`?
+    "                           because we may update the line coordinates, later, inside `coords_to_process`
+    "                           (necessary if the diagram is drawn above)
+    "                           and if we do, without `deepcopy()`, it would also affect `w:bd_marks.coords`
+    "                           because they would be the same list:
+
+    "                                   echo w:bd_marks.coords is coords_to_process    →    1
+
+    "                           without `deepcopy()`, we would need to remove `coords_to_process` from
+    "                           the next `for` loop:
+
+    "                                   for coord in coords_to_process + w:bd_marks.coords
+    "                                   →
+    "                                   for coord in w:bd_marks.coords
+
+    "                           … to avoid that the elements are incremented twice, instead of once
+
+    "                           but even then, the plugin wouldn't work as expected,
+    "                           because when we would try to draw an aligned diagram above a line,
+    "                           it would be too high
 
 
     " How Many lines of the diagram are still TO be DRAWn
@@ -174,13 +177,16 @@ fu! breakdown#expand(dir, align) abort
     if dir == -1
         " … the address of the line of the marked characters must be updated
         for coord in coords_to_process + w:bd_marks.coords
-"                                      │
-"                                      └── `coords_to_process` is only a copy
-"                                          of (a subset of) `w:bd_marks.coords`
-"                                          we also need to update the original coordinates
+        "                              │
+        "                              └── `coords_to_process` is only a copy
+        "                                  of (a subset of) `w:bd_marks.coords`
+        "                                  we also need to update the original coordinates
 
             " … increment it with `len(coords_to_process) + 1`
             let coord.line += len(coords_to_process) + 1
+            " FIXME:
+            " now, we won't be able to re-use these coordinates, if we undo
+            " and re-try to expand the diagram
         endfor
     endif
 
@@ -210,10 +216,10 @@ fu! breakdown#expand(dir, align) abort
     " comment the right side of the diagram lines
     if exists('cms_right') && !empty(cms_right)
         call s:comment(cms_right, 'right', dir, len(coords_to_process))
-    "                                           │
-    "                                           └── can't use `hm_to_draw` again
-    "                                               because the variable has been decremented
-    "                                               in the previous for loop
+        "                                       │
+        "                                       └── can't use `hm_to_draw` again
+        "                                           because the variable has been decremented
+        "                                           in the previous for loop
     endif
 
     " make the motion in the location list repeatable with `;` and `,`
@@ -225,29 +231,31 @@ fu! breakdown#expand(dir, align) abort
 
     " restore the original values of the options we changed
     let [ &ve, &l:tw, &l:wm ] = [ ve_save, tw_save, wm_save ]
+    " restore the coordinates in case we changed the addresses of the lines
+    " during the expansion; this restoration allows us to re-expand correctly
+    " the diagram later (after an undo), if we hit the wrong mapping by accident
+    let w:bd_marks.coords = coords_save
 endfu
 
 "}}}
 " mark "{{{
 
 fu! breakdown#mark() abort
-    " if `w:bd_marks` doesn't exist, initialize it
-    if !exists('w:bd_marks')
+    " if `w:bd_marks.id` doesn't exist, initialize `w:bd_marks`
+    if !exists('w:bd_marks.id')
         let w:bd_marks = {
                          \ 'coords'  : [],
                          \ 'pattern' : '',
                          \ 'id'      :  0,
                          \ }
-    else
-        if w:bd_marks.id
-            " otherwise if it exists and `w:bd_marks.id` is != 0,
-            " delete the match because we're going to update it:
-            " we don't want to add a new match besides the old one
-            call matchdelete(w:bd_marks.id)
-            " and add a bar at the end of the pattern, to prepare for a new
-            " piece
-            let w:bd_marks.pattern .= '|'
-        endif
+    elseif w:bd_marks.id
+        " otherwise if it exists and is different than 0
+        " delete the match because we're going to update it:
+        " we don't want to add a new match besides the old one
+        call matchdelete(w:bd_marks.id)
+        " and add a bar at the end of the pattern, to prepare for a new
+        " piece
+        let w:bd_marks.pattern .= '|'
     endif
 
     " If we're on the same line as the previous marked characters…
