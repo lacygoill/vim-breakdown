@@ -288,12 +288,26 @@ fu! breakdown#mark() abort
     " NOTE:
     " Every time we need to make a copy of the coordinates, we have to use
     " `deepcopy()`. We can't use `copy()`, because each item in the list of
-    " coordinates is a dictionary, not just a simple number.
+    " coordinates is a dictionary, not just a simple data structure such as
+    " a number or a string.
     "
     " `copy()` would create a new list of coordinates, but whose items would
     " be identical to the original list.
     "
     " So, changing an item in the copy would immediately affect the original list.
+    "
+    " However, we probably don't need `deepcopy()` here. Only later when we
+    " may update the 'line' key of each dictionary (happens when we expand the
+    " diagram above).
+    "
+    " Here, we don't change any key of the dictionaries inside the list
+    " `w:bd_marks.coords`. We simply use each dictionary to build a string
+    " which populates a list (the one returned by `map()`).
+    "
+    " So, why `deepcopy()` instead of `copy()`?
+    "
+    "         1. better be safe than sorry
+    "         2. consistency (`deepcopy()` later → `deepcopy()` now)
     let w:bd_marks.pattern = '\v'
                            \ .join(
                            \       map(
