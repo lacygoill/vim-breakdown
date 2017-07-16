@@ -284,6 +284,16 @@ fu! breakdown#mark() abort
     endif
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
+    "
+    " NOTE:
+    " Every time we need to make a copy of the coordinates, we have to use
+    " `deepcopy()`. We can't use `copy()`, because each item in the list of
+    " coordinates is a dictionary, not just a simple number.
+    "
+    " `copy()` would create a new list of coordinates, but whose items would
+    " be identical to the original list.
+    "
+    " So, changing an item in the copy would immediately affect the original list.
     let w:bd_marks.pattern = '\v'
                            \ .join(
                            \       map(
