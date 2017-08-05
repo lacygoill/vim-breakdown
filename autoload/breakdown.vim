@@ -1,14 +1,11 @@
-" clear "{{{
-
-fu! breakdown#clear() abort
+fu! breakdown#clear() abort "{{{1
     if exists('w:bd_marks.id')
         call matchdelete(w:bd_marks.id)
         call remove(w:bd_marks, 'id')
     endif
 endfu
 
-"}}}
-" comment "{{{
+fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
 
 " This function is called once or twice per line of the diagram.
 " Twice if we're in a buffer whose commentstring has 2 parts.
@@ -20,7 +17,6 @@ endfu
 " Its purpose is to comment each line of the diagram.
 " `what` is either the lhs or the rhs of a commentstring.
 
-fu! s:comment(what, where, dir, hm_to_draw) abort
     " Before beginning commenting the lines of the diagram, make sure the cursor
     " is on the line we're describing.
     exe 'norm! '. w:bd_marks.coords[0].line .'G'
@@ -40,11 +36,8 @@ fu! s:comment(what, where, dir, hm_to_draw) abort
     endfor
 endfu
 
-"}}}
-" draw "{{{
-
-" This function draws a piece of the diagram.
-fu! s:draw(align, dir, coord, hm_to_draw)
+fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
+    " This function draws a piece of the diagram.
     let [ align, dir, coord, hm_to_draw ] = [ a:align, a:dir, a:coord, a:hm_to_draw ]
 
     " reposition cursor before drawing the next piece
@@ -97,10 +90,7 @@ fu! s:draw(align, dir, coord, hm_to_draw)
     endif
 endfu
 
-"}}}
-" expand "{{{
-
-fu! breakdown#expand(dir, align) abort
+fu! breakdown#expand(dir, align) abort "{{{1
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
@@ -234,10 +224,7 @@ fu! breakdown#expand(dir, align) abort
     let w:bd_marks.coords = coords_save
 endfu
 
-"}}}
-" mark "{{{
-
-fu! breakdown#mark() abort
+fu! breakdown#mark() abort "{{{1
     " if `w:bd_marks.id` doesn't exist, initialize `w:bd_marks`
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
@@ -323,10 +310,7 @@ fu! breakdown#mark() abort
                         \   : 0
 endfu
 
-"}}}
-" populate_loclist "{{{
-
-fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
+fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
     let [ align, coord, dir, hm_to_draw ] = [ a:align, a:coord, a:dir, a:hm_to_draw ]
 
     " Example of aligned diagram:
@@ -390,5 +374,3 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort
                                      \ 'col'   : col,
                                      \ })
 endfu
-
-"}}}
