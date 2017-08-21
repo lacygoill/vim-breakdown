@@ -29,8 +29,8 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
         exe (a:dir == -1 ? '-' : '+')
 
         let replacement = a:where ==# 'left'
-                        \   ? indent . a:what
-                        \   : substitute(getline('.'), '$', ' '.a:what, '')
+                       \?     indent . a:what
+                       \:     substitute(getline('.'), '$', ' '.a:what, '')
 
         call setline(line('.'), replacement)
     endfor
@@ -129,8 +129,8 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " iterate over half of the coordinates.
 
     let coords_to_process = align
-                          \   ? filter(deepcopy(w:bd_marks.coords), 'v:key % 2 == 0')
-                          \   : deepcopy(w:bd_marks.coords)
+                         \?     filter(deepcopy(w:bd_marks.coords), 'v:key % 2 == 0')
+                         \:     deepcopy(w:bd_marks.coords)
     "                           │
     "                           └── why `deepcopy()`?
     "                           because we may update the line coordinates, later, inside `coords_to_process`
@@ -306,8 +306,8 @@ fu! breakdown#mark() abort "{{{1
 
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
-                        \   ? matchadd('SpellBad', w:bd_marks.pattern)
-                        \   : 0
+                     \?     matchadd('SpellBad', w:bd_marks.pattern)
+                     \:     0
 endfu
 
 fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
