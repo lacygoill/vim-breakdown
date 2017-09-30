@@ -187,7 +187,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " if there's a commentstring, comment the diagram lines (left side)
     " except in a markdown buffer, because a diagram won't cause errors in
     " a note file, so there's no need to
-    if !empty(&l:cms) && index(['markdown', 'text'], &ft) != -1
+    if !empty(&l:cms) && index(['markdown', 'text'], &ft) == -1
         let [ cms_left, cms_right ] = split(&l:cms, '%s', 1)
         call s:comment(cms_left, 'left', dir, hm_to_draw)
     endif
