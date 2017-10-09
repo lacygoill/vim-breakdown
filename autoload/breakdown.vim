@@ -254,7 +254,7 @@ fu! breakdown#mark() abort "{{{1
 
         " … and if the current position is already marked, then instead of
         " readding it as a mark, remove it (toggle).
-        if count(w:bd_marks.coords, {'line' : line('.'), 'col' : virtcol('.')} )
+        if index(w:bd_marks.coords, {'line' : line('.'), 'col' : virtcol('.')} ) != -1
 
             call filter(w:bd_marks.coords, " v:val != {'line' : line('.'), 'col' : virtcol('.')} ")
         else
