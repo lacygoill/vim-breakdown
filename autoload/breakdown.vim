@@ -240,7 +240,7 @@ fu! breakdown#mark() abort "{{{1
                          \ 'id'      :  0,
                          \ }
     elseif w:bd_marks.id
-        " otherwise if it exists and is different than 0
+        " otherwise if it exists and is different from 0
         " delete the match because we're going to update it:
         " we don't want to add a new match besides the old one
         call matchdelete(w:bd_marks.id)
