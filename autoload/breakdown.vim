@@ -86,13 +86,13 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
             for i in range(1, hm_to_draw + 1)
                 norm! kr│
             endfor
-            exe 'norm! R┌─ '
+            exe 'norm! R┌ '
         else
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
                 norm! jr│
             endfor
-            exe 'norm! R└─ '
+            exe 'norm! R└ '
         endif
     endif
 endfu
@@ -368,9 +368,9 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
             "          │                                                            └── add 4 as a fixed offset
             "          └── add 3 bytes for every character in the `└──…` segment
         else
-            let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (3*2)+1
+            let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (1*2)+1
             "          │           │                                           │
-            "          │           │                                           └── add 7 as a fixed offset
+            "          │           │                                           └── add 3 as a fixed offset
             "          │           └── before `└`, there could be some `│`: add 2 bytes for each of them
             "          └── number of bytes up to `└`/marked character
         endif
