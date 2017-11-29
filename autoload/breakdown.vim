@@ -1,7 +1,7 @@
-if exists('g:auto_loaded_breakdown')
+if exists('g:autoloaded_breakdown')
     finish
 endif
-let g:auto_loaded_breakdown = 1
+let g:autoloaded_breakdown = 1
 
 fu! breakdown#clear() abort "{{{1
     if exists('w:bd_marks.id')
