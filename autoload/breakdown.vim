@@ -300,8 +300,9 @@ fu! breakdown#mark() abort "{{{1
     "
     "         1. better be safe than sorry
     "         2. consistency (`deepcopy()` later → `deepcopy()` now)
+
     let w:bd_marks.pattern = '\v'.join(map(deepcopy(w:bd_marks.coords),
-    \                                      { i,v -> '%'.v.line.'l%'.v.col.'v.' })
+    \                                      { i,v -> '%'.v.line.'l%'.v.col.'v.' }),
     \                                  '|')
 
     " create a match and store its id in `w:bd_marks.id`
