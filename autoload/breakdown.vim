@@ -233,10 +233,10 @@ fu! breakdown#mark() abort "{{{1
     " if `w:bd_marks.id` doesn't exist, initialize `w:bd_marks`
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
-                         \ 'coords'  : [],
-                         \ 'pattern' : '',
-                         \ 'id'      :  0,
-                         \ }
+        \                  'coords'  : [],
+        \                  'pattern' : '',
+        \                  'id'      :  0,
+        \                }
     elseif w:bd_marks.id
         " otherwise if it exists and is different from 0
         " delete the match because we're going to update it:
@@ -254,7 +254,7 @@ fu! breakdown#mark() abort "{{{1
         " readding it as a mark, remove it (toggle).
         if index(w:bd_marks.coords, {'line' : line('.'), 'col' : virtcol('.')} ) >= 0
 
-            call filter(w:bd_marks.coords, { k,v ->  v != {'line' : line('.'), 'col' : virtcol('.')}  })
+            call filter(w:bd_marks.coords, { i,v ->  v != {'line' : line('.'), 'col' : virtcol('.')}  })
         else
 
         " … otherwise add the current position to the list of coordinates
@@ -300,14 +300,9 @@ fu! breakdown#mark() abort "{{{1
     "
     "         1. better be safe than sorry
     "         2. consistency (`deepcopy()` later → `deepcopy()` now)
-    let w:bd_marks.pattern = '\v'
-                           \ .join(
-                           \       map(
-                           \           deepcopy(w:bd_marks.coords),
-                           \           { k,v -> '%'.v.line.'l%'.v.col.'v.' }
-                           \          ),
-                           \       '|'
-                           \      )
+    let w:bd_marks.pattern = '\v'.join(map(deepcopy(w:bd_marks.coords),
+    \                                      { i,v -> '%'.v.line.'l%'.v.col.'v.' })
+    \                                  '|')
 
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
