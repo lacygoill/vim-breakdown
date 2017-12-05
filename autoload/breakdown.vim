@@ -59,38 +59,38 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
 
         if dir == -1
             " draw `┌───┤`
-            exe 'norm! kR┌'.repeat('─', w).'┤'
+            exe "norm! kR\u250c".repeat("\u2500", w)."\u2524"
             " draw the `│` column
             for i in range(1, hm_to_draw - 1)
-                norm! kr│
+                exe "norm! kr\u2502"
             endfor
             " draw `┌────`
-            exe 'norm! kR┌'.repeat('─', ww).' '
+            exe "norm! kR\u250c".repeat("\u2500", ww).' '
 
         else
             " draw `└───┤`
-            exe 'norm! jR└'.repeat('─', w).'┤'
+            exe "norm! jR\u2514".repeat("\u2500", w)."\u2524"
             " draw the `│` column
             for i in range(1, hm_to_draw - 1)
-                norm! jr│
+                exe "norm! jr\u2502"
             endfor
             " draw `└────`
-            exe 'norm! jR└'.repeat('─', ww).' '
+            exe "norm! jR\u2514".repeat("\u2500", ww).' '
         endif
 
     else
         if dir == -1
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
-                norm! kr│
+                exe "norm! kr\u2502"
             endfor
-            exe 'norm! R┌ '
+            exe "norm! R\u250c "
         else
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
-                norm! jr│
+                exe "norm! jr\u2502"
             endfor
-            exe 'norm! R└ '
+            exe "norm! R\u2514 "
         endif
     endif
 endfu
