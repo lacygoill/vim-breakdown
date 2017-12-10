@@ -1,8 +1,3 @@
-if exists('g:autoloaded_breakdown')
-    finish
-endif
-let g:autoloaded_breakdown = 1
-
 fu! breakdown#clear() abort "{{{1
     if exists('w:bd_marks.id')
         call matchdelete(w:bd_marks.id)
