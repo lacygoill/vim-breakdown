@@ -209,9 +209,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
         "                                           in the previous for loop
     endif
 
-    " make the motion in the location list repeatable with `;` and `,`
-    sil! norm [L
-    sil! norm [l
+    let g:motion_to_repeat = ']l'
 
     " clear match
     call breakdown#clear()
