@@ -60,11 +60,11 @@ nno  <silent><unique>  m{      :<c-u>call breakdown#expand(0, 1)<cr>
 " Maybe we should install mappings which would toggle the layout of all the
 " ending branches in a diagram...
 "
-"                                       don't maximize the window if the last visited window
-"                                       (winnr('#')) was a preview window ──────────────────────┐
-"                                                                                               │
-"                                                        ┌──────────────────────────────────────┤
-"                        if &l:buftype !=# 'quickfix' && !getwinvar(winnr('#'), '&previewwindow')
+"                                don't maximize the window if the last visited window
+"                                (winnr('#')) was a preview window ──────────────────────┐
+"                                                                                        │
+"                                                 ┌──────────────────────────────────────┤
+"                        if &bt !=# 'quickfix' && !getwinvar(winnr('#'), '&previewwindow')
 "
 " Long ending branches are ugly:
 "     '<,'>s/\v^\s*"\s*\zs(.{-})(\s*)(─+)/\=repeat(' ', strchars(submatch(3))).submatch(1).submatch(2)/
