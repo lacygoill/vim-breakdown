@@ -209,7 +209,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
         "                                           in the previous for loop
     endif
 
-    sil! call lg#motion#repeatable#make#set_last_used(']l', 1)
+    sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
 
     " clear match
     call breakdown#clear()
