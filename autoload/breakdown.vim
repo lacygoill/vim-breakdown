@@ -26,7 +26,7 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
     " iterate over the lines of the diagram
     for i in range(0, a:hm_to_draw)
         " move the cursor in the right direction
-        exe (a:dir == -1 ? '-' : '+')
+        exe (a:dir ==# -1 ? '-' : '+')
 
         let rep = a:where is# 'left'
         \?            indent . a:what
@@ -52,7 +52,7 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
         " get the width of the `───` segment to draw next to its description
         let ww = w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col
 
-        if dir == -1
+        if dir ==# -1
             " draw `┌───┤`
             exe "norm! kR\u250c".repeat("\u2500", w)."\u2524"
             " draw the `│` column
@@ -74,7 +74,7 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
         endif
 
     else
-        if dir == -1
+        if dir ==# -1
             " draw the `│` column
             for i in range(1, hm_to_draw + 1)
                 exe "norm! kr\u2502"
@@ -103,7 +103,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
 
     " if we want to draw the diagram in which the items are aligned, the number
     " of marked characters must be even, not odd
-    if align && len(w:bd_marks.coords) % 2 == 1
+    if align && len(w:bd_marks.coords) % 2 ==# 1
         echohl ErrorMsg
         echo '[breakdown] number of marked characters must be even'
         echohl None
@@ -129,7 +129,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " iterate over half of the coordinates.
 
     let coords_to_process = align
-    \?                          filter(deepcopy(w:bd_marks.coords), 'v:key % 2 == 0')
+    \?                          filter(deepcopy(w:bd_marks.coords), 'v:key % 2 ==# 0')
     \:                          deepcopy(w:bd_marks.coords)
     "                           │
     "                           └── why `deepcopy()`?
@@ -164,7 +164,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
     call append(line('.') + dir, repeat([''], hm_to_draw + 1))
 
     " if we've just opened new lines above (instead of below) …
-    if dir == -1
+    if dir ==# -1
         " … the address of the line of the marked characters must be updated
         for coord in coords_to_process + w:bd_marks.coords
         "                              │
@@ -180,7 +180,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " if there's a commentstring, comment the diagram lines (left side)
     " except in a markdown buffer, because a diagram won't cause errors in
     " a note file, so there's no need to
-    if !empty(&l:cms) && index(['markdown', 'text'], &ft) == -1
+    if !empty(&l:cms) && index(['markdown', 'text'], &ft) ==# -1
         let [ cms_left, cms_right ] = split(&l:cms, '%s', 1)
         call s:comment(cms_left, 'left', dir, hm_to_draw)
     endif
@@ -241,7 +241,7 @@ fu! breakdown#mark() abort "{{{1
     endif
 
     " If we're on the same line as the previous marked characters…
-    if !empty(w:bd_marks.coords) && line('.') == w:bd_marks.coords[0].line
+    if !empty(w:bd_marks.coords) && line('.') ==# w:bd_marks.coords[0].line
 
         " … and if the current position is already marked, then instead of
         " readding it as a mark, remove it (toggle).
@@ -364,7 +364,7 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
 
         call add(w:bd_marks.loclist, {
                                      \ 'bufnr' : bufnr('%'),
-                                     \ 'lnum'  : coord.line + (dir == -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
+                                     \ 'lnum'  : coord.line + (dir ==# -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
                                      \ 'col'   : col,
                                      \ })
 endfu
