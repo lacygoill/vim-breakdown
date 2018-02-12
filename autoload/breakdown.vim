@@ -28,7 +28,7 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
         " move the cursor in the right direction
         exe (a:dir == -1 ? '-' : '+')
 
-        let rep = a:where ==# 'left'
+        let rep = a:where is# 'left'
         \?            indent . a:what
         \:            substitute(getline('.'), '$', ' '.a:what, '')
 
