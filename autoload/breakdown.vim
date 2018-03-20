@@ -129,7 +129,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " iterate over half of the coordinates.
 
     let coords_to_process = align
-    \?                          filter(deepcopy(w:bd_marks.coords), 'v:key % 2 == 0')
+    \?                          filter(deepcopy(w:bd_marks.coords), {i,v -> i%2 == 0})
     \:                          deepcopy(w:bd_marks.coords)
     "                           │
     "                           └── why `deepcopy()`?
