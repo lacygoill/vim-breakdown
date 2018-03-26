@@ -29,8 +29,8 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
         exe (a:dir ==# -1 ? '-' : '+')
 
         let rep = a:where is# 'left'
-        \?            indent . a:what
-        \:            substitute(getline('.'), '$', ' '.a:what, '')
+        \         ?    indent . a:what
+        \         :    substitute(getline('.'), '$', ' '.a:what, '')
 
         call setline(line('.'), rep)
     endfor
@@ -129,29 +129,30 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " iterate over half of the coordinates.
 
     let coords_to_process = align
-    \?                          filter(deepcopy(w:bd_marks.coords), {i,v -> i%2 ==# 0})
-    \:                          deepcopy(w:bd_marks.coords)
-    "                           │
-    "                           └── why `deepcopy()`?
-    "                           because we may update the line coordinates, later, inside `coords_to_process`
-    "                           (necessary if the diagram is drawn above)
-    "                           and if we do, without `deepcopy()`, it would also affect `w:bd_marks.coords`
-    "                           because they would be the same list:
-
-    "                                   echo w:bd_marks.coords is coords_to_process    →    1
-
-    "                           without `deepcopy()`, we would need to remove `coords_to_process` from
-    "                           the next `for` loop:
-
-    "                                   for coord in coords_to_process + w:bd_marks.coords
-    "                                   →
-    "                                   for coord in w:bd_marks.coords
-
-    "                           … to avoid that the elements are incremented twice, instead of once
-
-    "                           but even then, the plugin wouldn't work as expected,
-    "                           because when we would try to draw an aligned diagram above a line,
-    "                           it would be too high
+    \                       ?    filter(deepcopy(w:bd_marks.coords), {i,v -> i%2 ==# 0})
+    \                       :    deepcopy(w:bd_marks.coords)
+    "                            │
+    "                            └── why `deepcopy()`?{{{
+    "
+    " Because   we   may   update    the   line   coordinates,   later,   inside
+    " `coords_to_process` (necessary if the diagram is drawn above).
+    " And   if   we   do,   without   `deepcopy()`,   it   would   also   affect
+    " `w:bd_marks.coords` because they would be the same list:
+    "
+    "         echo w:bd_marks.coords is coords_to_process    →    1
+    "
+    " Without `deepcopy()`, we would need to remove `coords_to_process` from the
+    " next `for` loop:
+    "
+    "         for coord in coords_to_process + w:bd_marks.coords
+    "         →
+    "         for coord in w:bd_marks.coords
+    "
+    " To avoid that the elements are incremented twice, instead of once.
+    "
+    " But even then, the plugin wouldn't work as expected, because when we would
+    " try to draw an aligned diagram above a line, it would be too high.
+    "}}}
 
 
     " How Many lines of the diagram are still TO be DRAWn
@@ -300,8 +301,8 @@ fu! breakdown#mark() abort "{{{1
 
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
-    \?                      matchadd('SpellBad', w:bd_marks.pattern)
-    \:                      0
+    \                   ?    matchadd('SpellBad', w:bd_marks.pattern)
+    \                   :    0
 endfu
 
 fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
