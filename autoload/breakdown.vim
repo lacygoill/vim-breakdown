@@ -36,14 +36,14 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
     endfor
 endfu
 
-fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
+fu! s:draw(bucket, dir, coord, hm_to_draw) "{{{1
     " This function draws a piece of the diagram.
-    let [ align, dir, coord, hm_to_draw ] = [ a:align, a:dir, a:coord, a:hm_to_draw ]
+    let [ bucket, dir, coord, hm_to_draw ] = [ a:bucket, a:dir, a:coord, a:hm_to_draw ]
 
     " reposition cursor before drawing the next piece
     exe 'norm! '. coord.line .'G'. coord.col . '|'
 
-    if align
+    if bucket
         " get the index of the current marked character inside the list of
         " coordinates (w:bd_marks.coords)
         let i = index(w:bd_marks.coords, coord)
@@ -88,20 +88,20 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
     endif
 endfu
 
-fu! breakdown#expand(dir, align) abort "{{{1
+fu! breakdown#expand(dir, bucket) abort "{{{1
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
     endif
 
-    let [ dir, align ] = [ a:dir, a:align ]
+    let [ dir, bucket ] = [ a:dir, a:bucket ]
     " we save the coordinates, because we may update them during the expansion
     " it happens when the diagram must be drawn above (not below)
     let coords_save = deepcopy(w:bd_marks.coords)
 
-    " if we want to draw the diagram in which the items are aligned, the number
-    " of marked characters must be even, not odd
-    if align && len(w:bd_marks.coords) % 2 ==# 1
+    " if we  want to draw  the diagram in which  the items contain  buckets, the
+    " number of marked characters must be even, not odd
+    if bucket && len(w:bd_marks.coords) % 2 ==# 1
         echohl ErrorMsg
         echo '[breakdown] number of marked characters must be even'
         echohl None
@@ -121,12 +121,12 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " right
     call sort(w:bd_marks.coords, {x,y -> x.col - y.col})
 
-    " In a diagram in which the descriptions are aligned, every 2 consecutive
-    " marked characters stand for one piece of the latter.
+    " In a  diagram containing  buckets, every  2 consecutive  marked characters
+    " stand for one piece of the latter.
     " Therefore, the `for` loop which will progressively draw the diagram must
     " iterate over half of the coordinates.
 
-    let coords_to_process = align
+    let coords_to_process = bucket
                         \ ?     filter(deepcopy(w:bd_marks.coords), {i,v -> i%2 ==# 0})
                         \ :     deepcopy(w:bd_marks.coords)
     "                           │
@@ -149,7 +149,7 @@ fu! breakdown#expand(dir, align) abort "{{{1
     " To avoid that the elements are incremented twice, instead of once.
     "
     " But even then, the plugin wouldn't work as expected, because when we would
-    " try to draw an aligned diagram above a line, it would be too high.
+    " try to draw a bucket diagram above a line, it would be too high.
     "}}}
 
 
@@ -186,10 +186,10 @@ fu! breakdown#expand(dir, align) abort "{{{1
 
     for coord in coords_to_process
         " draw a piece of the diagram
-        call s:draw(align, dir, coord, hm_to_draw)
+        call s:draw(bucket, dir, coord, hm_to_draw)
 
         " populate the location list
-        call s:populate_loclist(align, coord, dir, hm_to_draw)
+        call s:populate_loclist(bucket, coord, dir, hm_to_draw)
 
         let hm_to_draw -= 1
     endfor
@@ -303,10 +303,10 @@ fu! breakdown#mark() abort "{{{1
                     \ :     0
 endfu
 
-fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
-    let [ align, coord, dir, hm_to_draw ] = [ a:align, a:coord, a:dir, a:hm_to_draw ]
+fu! s:populate_loclist(bucket, coord, dir, hm_to_draw) abort "{{{1
+    let [ bucket, coord, dir, hm_to_draw ] = [ a:bucket, a:coord, a:dir, a:hm_to_draw ]
 
-    " Example of aligned diagram:
+    " Example of bucket diagram:
     "
     "     search('=\%#>', 'bn', line('.'))
     "            └─────┤  └──┤  └───────┤
@@ -332,7 +332,7 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
     " a line in the diagram matches the visual column of the corresponding
     " marked character.
 
-        if align
+        if bucket
             " We are going to store the byte index of the character where we
             " want the cursor to be positioned.
             " To compute this byte index, we first need to know the index of
