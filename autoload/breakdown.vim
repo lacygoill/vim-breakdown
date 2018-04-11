@@ -341,7 +341,7 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
 
             let i = index(w:bd_marks.coords, coord)
 
-            let col  = w:bd_marks.coords[i+1].col + ((len(w:bd_marks.coords)/2 - hm_to_draw))*2
+            let col  = w:bd_marks.coords[i+1].col + (len(w:bd_marks.coords)/2 - hm_to_draw)*2
             "          │                            │
             "          │                            └ before `└`/`┌`, there could be some `│`:
             "          │                              add 2 bytes for each of them
@@ -351,9 +351,9 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
             " The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
             " Because with `coord.col`, we already added one byte for each of them.
         else
-            let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (1*2)+1
-            "          │           │                                           │
-            "          │           │                                           └ add 3 as a fixed offset
+            let col  = coord.col + 2*(len(w:bd_marks.coords) - hm_to_draw) + (1*2)+1
+            "          │           │                                          │
+            "          │           │                                          └ add 3 as a fixed offset
             "          │           │
             "          │           └ before `└`, there could be some `│`:
             "          │             add 2 bytes for each of them
