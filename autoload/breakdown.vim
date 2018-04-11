@@ -49,8 +49,6 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
         let i = index(w:bd_marks.coords, coord)
         " get the width of the `───` segment to draw above the item to describe
         let w = w:bd_marks.coords[i+1].col - coord.col - 1
-        " get the width of the `───` segment to draw next to its description
-        let ww = w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col
 
         if dir ==# -1
             " draw `┌───┤`
@@ -59,8 +57,8 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
             for i in range(1, hm_to_draw - 1)
                 exe "norm! kr\u2502"
             endfor
-            " draw `┌────`
-            exe "norm! kR\u250c".repeat("\u2500", ww).' '
+            " draw `┌`
+            exe "norm! kR\u250c "
 
         else
             " draw `└───┤`
@@ -69,8 +67,8 @@ fu! s:draw(align, dir, coord, hm_to_draw) "{{{1
             for i in range(1, hm_to_draw - 1)
                 exe "norm! jr\u2502"
             endfor
-            " draw `└────`
-            exe "norm! jR\u2514".repeat("\u2500", ww).' '
+            " draw `└`
+            exe "norm! jR\u2514 "
         endif
 
     else
@@ -205,9 +203,9 @@ fu! breakdown#expand(dir, align) abort "{{{1
     if exists('cms_right') && !empty(cms_right)
         call s:comment(cms_right, 'right', dir, len(coords_to_process))
         "                                       │
-        "                                       └── can't use `hm_to_draw` again
-        "                                           because the variable has been decremented
-        "                                           in the previous for loop
+        "                                       └ can't use `hm_to_draw` again
+        "                                         because the variable has been decremented
+        "                                         in the previous for loop
     endif
 
     sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
@@ -313,9 +311,11 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
     "     search('=\%#>', 'bn', line('.'))
     "            └─────┤  └──┤  └───────┤
     "                  │     │          └ search in the current line only
-    "                  │     └─────────── backwards without moving the cursor and
-    "                  └───────────────── match any `=[>]`, where `[]` denotes the
-    "                                     cursor's position
+    "                  │     │
+    "                  │     └ backwards without moving the cursor and
+    "                  │
+    "                  └ match any `=[>]`, where `[]` denotes the
+    "                    cursor's position
 
     " NOTE:
     " When we stored the position of the marked characters, we've used `virtcol()`,
@@ -343,24 +343,22 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
 
             let col  = w:bd_marks.coords[i+1].col + ((len(w:bd_marks.coords)/2 - hm_to_draw))*2
             "          │                            │
-            "          │                            └── before `└`/`┌`, there could be some `│`:
-            "          │                                add 2 bytes for each of them
+            "          │                            └ before `└`/`┌`, there could be some `│`:
+            "          │                              add 2 bytes for each of them
             "          │
-            "          └── byte index of the next marked character (the one above/below `┤`)
+            "          └ byte index of the next marked character (the one above/below `┤`)
             " NOTE:
             " The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
             " Because with `coord.col`, we already added one byte for each of them.
-
-            let col += 3*(w:bd_marks.coords[-1].col - w:bd_marks.coords[i+1].col) + (3*1)+1
-            "          │                                                            │
-            "          │                                                            └── add 4 as a fixed offset
-            "          └── add 3 bytes for every character in the `└──…` segment
         else
             let col  = coord.col + 2*((len(w:bd_marks.coords) - hm_to_draw)) + (1*2)+1
             "          │           │                                           │
-            "          │           │                                           └── add 3 as a fixed offset
-            "          │           └── before `└`, there could be some `│`: add 2 bytes for each of them
-            "          └── number of bytes up to `└`/marked character
+            "          │           │                                           └ add 3 as a fixed offset
+            "          │           │
+            "          │           └ before `└`, there could be some `│`:
+            "          │             add 2 bytes for each of them
+            "          │
+            "          └ number of bytes up to `└`/marked character
         endif
 
         call add(w:bd_marks.loclist, {
@@ -369,3 +367,4 @@ fu! s:populate_loclist(align, coord, dir, hm_to_draw) abort "{{{1
                                      \ 'col'   : col,
                                      \ })
 endfu
+
