@@ -148,38 +148,7 @@ endfu
 
 fu! breakdown#mark() abort "{{{2
     call s:mark_init()
-
-    " If we're on the same line as the previous marked characters…
-    if !empty(w:bd_marks.coords) && line('.') ==# w:bd_marks.coords[0].line
-
-        " … and if the current position is already marked, then instead of
-        " re-adding it as a mark, remove it (toggle).
-        if index( w:bd_marks.coords,
-        \         {'line' : line('.'), 'col' : virtcol('.')} )
-        \  >= 0
-
-            call filter(w:bd_marks.coords,
-            \           { i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')} }
-            \ )
-        else
-
-            " … otherwise, add the current position to the list of coordinates
-
-            let w:bd_marks.coords += [{
-            \       'line' : line('.'),
-            \       'col'  : virtcol('.'),
-            \ }]
-        endif
-
-    else
-    " Otherwise, if we're marking a character on a different line, reset
-    " completely the list of coordinates.
-
-        let w:bd_marks.coords = [{
-        \       'line' : line('.'),
-        \       'col'  : virtcol('.'),
-        \ }]
-    endif
+    call s:update_coords()
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
     let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), { i,v -> '%'. v.line .'l%'. v.col .'v.' })
@@ -393,6 +362,40 @@ fu! s:mark_init() abort "{{{2
         call matchdelete(w:bd_marks.id)
         " and add a bar at the end of the pattern, to prepare for the new branch
         let w:bd_marks.pat .= '|'
+    endif
+endfu
+
+fu! s:update_coords() abort "{{{2
+    " If we're on the same line as the previous marked characters…
+    if !empty(w:bd_marks.coords) && line('.') ==# w:bd_marks.coords[0].line
+
+        " … and if the current position is already marked, then instead of
+        " re-adding it as a mark, remove it (toggle).
+        if index( w:bd_marks.coords,
+        \         {'line' : line('.'), 'col' : virtcol('.')} )
+        \  >= 0
+
+            call filter(w:bd_marks.coords,
+            \           { i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')} }
+            \ )
+        else
+
+            " … otherwise, add the current position to the list of coordinates
+
+            let w:bd_marks.coords += [{
+            \       'line' : line('.'),
+            \       'col'  : virtcol('.'),
+            \ }]
+        endif
+
+    else
+    " Otherwise, if we're marking a character on a different line, reset
+    " completely the list of coordinates.
+
+        let w:bd_marks.coords = [{
+        \       'line' : line('.'),
+        \       'col'  : virtcol('.'),
+        \ }]
     endif
 endfu
 
