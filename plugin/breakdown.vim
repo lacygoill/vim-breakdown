@@ -6,12 +6,32 @@ let g:loaded_breakdown = 1
 nno  <silent><unique>  m<cr>   :<c-u>call breakdown#mark()<cr>
 nno  <silent><unique>  m<c-h>  :<c-u>call breakdown#clear()<cr>
 
-nno  <silent><unique>  m)      :<c-u>call breakdown#expand(-1, 0)<cr>
-nno  <silent><unique>  m(      :<c-u>call breakdown#expand(-1, 1)<cr>
+nno  <silent><unique>  m)      :<c-u>call breakdown#expand('simple', 'above')<cr>
+nno  <silent><unique>  m}      :<c-u>call breakdown#expand('simple', 'below')<cr>
 
-nno  <silent><unique>  m}      :<c-u>call breakdown#expand(0, 0)<cr>
-nno  <silent><unique>  m{      :<c-u>call breakdown#expand(0, 1)<cr>
+nno  <silent><unique>  m(      :<c-u>call breakdown#expand('bucket', 'above')<cr>
+nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr>
 
+" TODO: Change how the bucket diagrams are drawn: {{{
+"
+"            └─────┤
+"                  └  some description
+"
+"                  →
+"
+"
+"            ├─────┘
+"            └ some description
+"
+"
+"
+" And for the reverse direction, draw it like this:
+"
+"            └─────┤
+"                  ┘
+"
+" In both cases, it would give us more space to write.
+"}}}
 " TODO: Add support for text written before diagram (instead of after){{{
 "
 " For the lhs use:    m((
@@ -76,5 +96,4 @@ nno  <silent><unique>  m{      :<c-u>call breakdown#expand(0, 1)<cr>
 "             backwards without moving the cursor and ┘     │
 "                                                           │
 "                           search in the current line only ┘
-"
 "}}}

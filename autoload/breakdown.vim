@@ -36,14 +36,14 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
     endfor
 endfu
 
-fu! s:draw(bucket, dir, coord, hm_to_draw) "{{{1
+fu! s:draw(is_bucket, dir, coord, hm_to_draw) "{{{1
     " This function draws a piece of the diagram.
-    let [ bucket, dir, coord, hm_to_draw ] = [ a:bucket, a:dir, a:coord, a:hm_to_draw ]
+    let [ is_bucket, dir, coord, hm_to_draw ] = [ a:is_bucket, a:dir, a:coord, a:hm_to_draw ]
 
     " reposition cursor before drawing the next piece
     exe 'norm! '. coord.line .'G'. coord.col . '|'
 
-    if bucket
+    if is_bucket
         " get the index of the current marked character inside the list of
         " coordinates (w:bd_marks.coords)
         let i = index(w:bd_marks.coords, coord)
@@ -88,20 +88,20 @@ fu! s:draw(bucket, dir, coord, hm_to_draw) "{{{1
     endif
 endfu
 
-fu! breakdown#expand(dir, bucket) abort "{{{1
+fu! breakdown#expand(shape, dir) abort "{{{1
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
     endif
 
-    let [ dir, bucket ] = [ a:dir, a:bucket ]
+    let [ dir, shape ] = [ a:dir is# 'above' ? -1 : 0, a:shape ]
     " we save the coordinates, because we may update them during the expansion
     " it happens when the diagram must be drawn above (not below)
     let coords_save = deepcopy(w:bd_marks.coords)
 
     " if we  want to draw  the diagram in which  the items contain  buckets, the
     " number of marked characters must be even, not odd
-    if bucket && len(w:bd_marks.coords) % 2 ==# 1
+    if a:shape is# 'bucket' && len(w:bd_marks.coords) % 2 ==# 1
         echohl ErrorMsg
         echo '[breakdown] number of marked characters must be even'
         echohl None
@@ -126,7 +126,7 @@ fu! breakdown#expand(dir, bucket) abort "{{{1
     " Therefore, the `for` loop which will progressively draw the diagram must
     " iterate over half of the coordinates.
 
-    let coords_to_process = bucket
+    let coords_to_process = a:shape is# 'bucket'
                         \ ?     filter(deepcopy(w:bd_marks.coords), {i,v -> i%2 ==# 0})
                         \ :     deepcopy(w:bd_marks.coords)
     "                           │
@@ -186,10 +186,10 @@ fu! breakdown#expand(dir, bucket) abort "{{{1
 
     for coord in coords_to_process
         " draw a piece of the diagram
-        call s:draw(bucket, dir, coord, hm_to_draw)
+        call s:draw(a:shape is# 'bucket', dir, coord, hm_to_draw)
 
         " populate the location list
-        call s:populate_loclist(bucket, coord, dir, hm_to_draw)
+        call s:populate_loclist(a:shape is# 'bucket', coord, dir, hm_to_draw)
 
         let hm_to_draw -= 1
     endfor
@@ -303,8 +303,8 @@ fu! breakdown#mark() abort "{{{1
                     \ :     0
 endfu
 
-fu! s:populate_loclist(bucket, coord, dir, hm_to_draw) abort "{{{1
-    let [ bucket, coord, dir, hm_to_draw ] = [ a:bucket, a:coord, a:dir, a:hm_to_draw ]
+fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{1
+    let [ is_bucket, coord, dir, hm_to_draw ] = [ a:is_bucket, a:coord, a:dir, a:hm_to_draw ]
 
     " Example of bucket diagram:
     "
@@ -332,7 +332,7 @@ fu! s:populate_loclist(bucket, coord, dir, hm_to_draw) abort "{{{1
     " a line in the diagram matches the visual column of the corresponding
     " marked character.
 
-        if bucket
+        if is_bucket
             " We are going to store the byte index of the character where we
             " want the cursor to be positioned.
             " To compute this byte index, we first need to know the index of
