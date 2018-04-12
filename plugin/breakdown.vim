@@ -46,10 +46,10 @@ nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr
 "
 " We would have to change the mappings like this:
 "
-" nno <silent> m((      :<c-u>call breakdown#main(-1, -1, 0)<cr>
-" nno <silent> m()      :<c-u>call breakdown#main(-1, 0, 0)<cr>
-" nno <silent> m)(      :<c-u>call breakdown#main(0, -1, 0)<cr>
-" nno <silent> m))      :<c-u>call breakdown#main(0, 0, 0)<cr>
+" nno <silent>   m((   :<c-u>call breakdown#main('bucket', 'above', 'before')<cr>
+" nno <silent>   m()   :<c-u>call breakdown#main('bucket', 'above', 'after')<cr>
+" nno <silent>   m)(   :<c-u>call breakdown#main('simple', 'above', 'before')<cr>
+" nno <silent>   m))   :<c-u>call breakdown#main('simple', 'above', 'after')<cr>
 "
 " And adapt `draw()` and `populate_loclist()`.
 "
