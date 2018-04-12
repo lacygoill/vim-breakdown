@@ -1,4 +1,5 @@
-fu! breakdown#clear_match() abort "{{{1
+" Interface {{{1
+fu! breakdown#clear_match() abort "{{{2
     if exists('w:bd_marks.id')
         call matchdelete(w:bd_marks.id)
         " Why not removing `w:bd_marks` entirely?{{{
@@ -13,101 +14,7 @@ fu! breakdown#clear_match() abort "{{{1
     endif
 endfu
 
-fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
-    " Purpose:{{{
-    " This function is called once or twice per line of the diagram.
-    " Twice if we're in a buffer whose commentstring has 2 parts.
-    "
-    " Example:    <!-- html text -->
-    "             ^              ^
-    "             first part     2nd part
-    "
-    " Its purpose is to comment each line of the diagram.
-    " `what` is either the lhs or the rhs of a commentstring.
-    "}}}
-
-    " Before beginning commenting the lines of the diagram, make sure the cursor
-    " is on the line we're describing.
-    exe 'norm! '. w:bd_marks.coords[0].line .'G'
-
-    let indent = repeat(' ', indent('.'))
-
-    " iterate over the lines of the diagram
-    for i in range(0, a:hm_to_draw)
-        " move the cursor in the right direction
-        exe (a:dir ==# -1 ? '-' : '+')
-
-        let rep = a:where is# 'left'
-              \ ?     indent . a:what
-              \ :     substitute(getline('.'), '$', ' '.a:what, '')
-
-        call setline(line('.'), rep)
-    endfor
-endfu
-
-fu! s:draw(is_bucket, dir, coord, hm_to_draw) "{{{1
-    " This function draws a branch of the diagram.
-
-    " reposition cursor before drawing the next branch
-    exe 'norm! '. a:coord.line .'G'. a:coord.col . '|'
-
-    if a:is_bucket
-        call s:draw_bucket(a:dir, a:hm_to_draw, a:coord)
-    else
-        call s:draw_non_bucket(a:dir, a:hm_to_draw)
-    endif
-endfu
-
-fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{1
-    let [ dir, hm_to_draw, coord ]  = [ a:dir, a:hm_to_draw, a:coord ]
-
-    " get the index of the current marked character inside the list of
-    " coordinates (w:bd_marks.coords)
-    let i = index(w:bd_marks.coords, coord)
-    " get the width of the `───` segment to draw above the item to describe
-    let w = w:bd_marks.coords[i+1].col - coord.col - 1
-
-    if dir ==# -1
-        " draw `┌───┤`
-        exe "norm! kR\u250c".repeat("\u2500", w)."\u2524"
-        " draw the `│` column
-        for i in range(1, hm_to_draw - 1)
-            exe "norm! kr\u2502"
-        endfor
-        " draw `┌`
-        exe "norm! kR\u250c "
-
-    else
-        " draw `└───┤`
-        exe "norm! jR\u2514".repeat("\u2500", w)."\u2524"
-        " draw the `│` column
-        for i in range(1, hm_to_draw - 1)
-            exe "norm! jr\u2502"
-        endfor
-        " draw `└`
-        exe "norm! jR\u2514 "
-    endif
-endfu
-
-fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{1
-    let [ dir, hm_to_draw ]  = [ a:dir, a:hm_to_draw ]
-
-    if dir ==# -1
-        " draw the `│` column
-        for i in range(1, hm_to_draw + 1)
-            exe "norm! kr\u2502"
-        endfor
-        exe "norm! R\u250c "
-    else
-        " draw the `│` column
-        for i in range(1, hm_to_draw + 1)
-            exe "norm! jr\u2502"
-        endfor
-        exe "norm! R\u2514 "
-    endif
-endfu
-
-fu! breakdown#expand(shape, dir) abort "{{{1
+fu! breakdown#expand(shape, dir) abort "{{{2
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
@@ -239,20 +146,8 @@ fu! breakdown#expand(shape, dir) abort "{{{1
     sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
 endfu
 
-fu! breakdown#mark() abort "{{{1
-    if !exists('w:bd_marks.id')
-        let w:bd_marks = {
-        \       'coords' : [],
-        \       'pat'    : '',
-        \       'id'     :  0,
-        \ }
-    elseif w:bd_marks.id
-        " if there's a match, delete it because we're going to update it:
-        " we don't want to add a new match besides the old one
-        call matchdelete(w:bd_marks.id)
-        " and add a bar at the end of the pattern, to prepare for the new branch
-        let w:bd_marks.pat .= '|'
-    endif
+fu! breakdown#mark() abort "{{{2
+    call s:mark_init()
 
     " If we're on the same line as the previous marked characters…
     if !empty(w:bd_marks.coords) && line('.') ==# w:bd_marks.coords[0].line
@@ -324,7 +219,70 @@ fu! breakdown#mark() abort "{{{1
                     \ :     0
 endfu
 
-fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{1
+" Core {{{1
+fu! s:draw(is_bucket, dir, coord, hm_to_draw) "{{{2
+    " This function draws a branch of the diagram.
+
+    " reposition cursor before drawing the next branch
+    exe 'norm! '. a:coord.line .'G'. a:coord.col . '|'
+
+    if a:is_bucket
+        call s:draw_bucket(a:dir, a:hm_to_draw, a:coord)
+    else
+        call s:draw_non_bucket(a:dir, a:hm_to_draw)
+    endif
+endfu
+
+fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
+    let [ dir, hm_to_draw, coord ]  = [ a:dir, a:hm_to_draw, a:coord ]
+
+    " get the index of the current marked character inside the list of
+    " coordinates (w:bd_marks.coords)
+    let i = index(w:bd_marks.coords, coord)
+    " get the width of the `───` segment to draw above the item to describe
+    let w = w:bd_marks.coords[i+1].col - coord.col - 1
+
+    if dir ==# -1
+        " draw `┌───┤`
+        exe "norm! kR\u250c".repeat("\u2500", w)."\u2524"
+        " draw the `│` column
+        for i in range(1, hm_to_draw - 1)
+            exe "norm! kr\u2502"
+        endfor
+        " draw `┌`
+        exe "norm! kR\u250c "
+
+    else
+        " draw `└───┤`
+        exe "norm! jR\u2514".repeat("\u2500", w)."\u2524"
+        " draw the `│` column
+        for i in range(1, hm_to_draw - 1)
+            exe "norm! jr\u2502"
+        endfor
+        " draw `└`
+        exe "norm! jR\u2514 "
+    endif
+endfu
+
+fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
+    let [ dir, hm_to_draw ]  = [ a:dir, a:hm_to_draw ]
+
+    if dir ==# -1
+        " draw the `│` column
+        for i in range(1, hm_to_draw + 1)
+            exe "norm! kr\u2502"
+        endfor
+        exe "norm! R\u250c "
+    else
+        " draw the `│` column
+        for i in range(1, hm_to_draw + 1)
+            exe "norm! jr\u2502"
+        endfor
+        exe "norm! R\u2514 "
+    endif
+endfu
+
+fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     let [ is_bucket, coord, dir, hm_to_draw ] = [ a:is_bucket, a:coord, a:dir, a:hm_to_draw ]
 
     " Example of bucket diagram:
@@ -362,30 +320,79 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{1
 
             let i = index(w:bd_marks.coords, coord)
 
-            let col  = w:bd_marks.coords[i+1].col + (len(w:bd_marks.coords)/2 - hm_to_draw)*2
-            "          │                            │
-            "          │                            └ before `└`/`┌`, there could be some `│`:
-            "          │                              add 2 bytes for each of them
-            "          │
-            "          └ byte index of the next marked character (the one above/below `┤`)
+            let col = w:bd_marks.coords[i+1].col + (len(w:bd_marks.coords)/2 - hm_to_draw)*2
+            "         │                            │
+            "         │                            └ before `└`/`┌`, there could be some `│`:
+            "         │                              add 2 bytes for each of them
+            "         │
+            "         └ byte index of the next marked character (the one above/below `┤`)
             " NOTE:
             " The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
             " Because with `coord.col`, we already added one byte for each of them.
         else
-            let col  = coord.col + 2*(len(w:bd_marks.coords) - hm_to_draw) + (1*2)+1
-            "          │           │                                          │
-            "          │           │                                          └ add 3 as a fixed offset
-            "          │           │
-            "          │           └ before `└`, there could be some `│`:
-            "          │             add 2 bytes for each of them
-            "          │
-            "          └ number of bytes up to `└`/marked character
+            let col = coord.col + 2*(len(w:bd_marks.coords) - hm_to_draw) + (1*2)+1
+            "         │           │                                          │
+            "         │           │                                          └ add 3 as a fixed offset
+            "         │           │
+            "         │           └ before `└`, there could be some `│`:
+            "         │             add 2 bytes for each of them
+            "         │
+            "         └ number of bytes up to `└`/marked character
         endif
 
         call add(w:bd_marks.loclist, {
-                                     \ 'bufnr' : bufnr('%'),
-                                     \ 'lnum'  : coord.line + (dir ==# -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
-                                     \ 'col'   : col,
-                                     \ })
+        \            'bufnr' : bufnr('%'),
+        \            'lnum'  : coord.line + (dir ==# -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
+        \            'col'   : col,
+        \ })
+endfu
+
+" Misc. {{{1
+fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
+    " Purpose:{{{
+    " This function is called once or twice per line of the diagram.
+    " Twice if we're in a buffer whose commentstring has 2 parts.
+    "
+    " Example:    <!-- html text -->
+    "             ^              ^
+    "             first part     2nd part
+    "
+    " Its purpose is to comment each line of the diagram.
+    " `what` is either the lhs or the rhs of a commentstring.
+    "}}}
+
+    " Before beginning commenting the lines of the diagram, make sure the cursor
+    " is on the line we're describing.
+    exe 'norm! '. w:bd_marks.coords[0].line .'G'
+
+    let indent = repeat(' ', indent('.'))
+
+    " iterate over the lines of the diagram
+    for i in range(0, a:hm_to_draw)
+        " move the cursor in the right direction
+        exe (a:dir ==# -1 ? '-' : '+')
+
+        let rep = a:where is# 'left'
+              \ ?     indent . a:what
+              \ :     substitute(getline('.'), '$', ' '.a:what, '')
+
+        call setline(line('.'), rep)
+    endfor
+endfu
+
+fu! s:mark_init() abort "{{{2
+    if !exists('w:bd_marks.id')
+        let w:bd_marks = {
+        \       'coords' : [],
+        \       'pat'    : '',
+        \       'id'     :  0,
+        \ }
+    elseif w:bd_marks.id
+        " if there's a match, delete it because we're going to update it:
+        " we don't want to add a new match besides the old one
+        call matchdelete(w:bd_marks.id)
+        " and add a bar at the end of the pattern, to prepare for the new branch
+        let w:bd_marks.pat .= '|'
+    endif
 endfu
 
