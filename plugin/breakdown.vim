@@ -4,7 +4,7 @@ endif
 let g:loaded_breakdown = 1
 
 nno  <silent><unique>  m<cr>   :<c-u>call breakdown#mark()<cr>
-nno  <silent><unique>  m<c-h>  :<c-u>call breakdown#clear()<cr>
+nno  <silent><unique>  m<c-h>  :<c-u>call breakdown#clear_match()<cr>
 
 nno  <silent><unique>  m)      :<c-u>call breakdown#expand('simple', 'above')<cr>
 nno  <silent><unique>  m}      :<c-u>call breakdown#expand('simple', 'below')<cr>

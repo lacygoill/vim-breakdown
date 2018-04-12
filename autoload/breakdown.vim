@@ -1,21 +1,30 @@
-fu! breakdown#clear() abort "{{{1
+fu! breakdown#clear_match() abort "{{{1
     if exists('w:bd_marks.id')
         call matchdelete(w:bd_marks.id)
+        " Why not removing `w:bd_marks` entirely?{{{
+        "
+        " At the end of `expand()`, we invoke this function to clear the match.
+        " So, if we remove `w:bd_marks` here,  we won't be able to re-expand the
+        " diagram without marking the characters again.
+        "
+        " IOW, the saved coordinates may still be useful; keep them.
+        "}}}
         call remove(w:bd_marks, 'id')
     endif
 endfu
 
 fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
-
-" This function is called once or twice per line of the diagram.
-" Twice if we're in a buffer whose commentstring has 2 parts.
-"
-" Example:    <!-- html text -->
-"             ^              ^
-"             first part     2nd part
-"
-" Its purpose is to comment each line of the diagram.
-" `what` is either the lhs or the rhs of a commentstring.
+    " Purpose:{{{
+    " This function is called once or twice per line of the diagram.
+    " Twice if we're in a buffer whose commentstring has 2 parts.
+    "
+    " Example:    <!-- html text -->
+    "             ^              ^
+    "             first part     2nd part
+    "
+    " Its purpose is to comment each line of the diagram.
+    " `what` is either the lhs or the rhs of a commentstring.
+    "}}}
 
     " Before beginning commenting the lines of the diagram, make sure the cursor
     " is on the line we're describing.
@@ -37,54 +46,64 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{1
 endfu
 
 fu! s:draw(is_bucket, dir, coord, hm_to_draw) "{{{1
-    " This function draws a piece of the diagram.
-    let [ is_bucket, dir, coord, hm_to_draw ] = [ a:is_bucket, a:dir, a:coord, a:hm_to_draw ]
+    " This function draws a branch of the diagram.
 
-    " reposition cursor before drawing the next piece
-    exe 'norm! '. coord.line .'G'. coord.col . '|'
+    " reposition cursor before drawing the next branch
+    exe 'norm! '. a:coord.line .'G'. a:coord.col . '|'
 
-    if is_bucket
-        " get the index of the current marked character inside the list of
-        " coordinates (w:bd_marks.coords)
-        let i = index(w:bd_marks.coords, coord)
-        " get the width of the `───` segment to draw above the item to describe
-        let w = w:bd_marks.coords[i+1].col - coord.col - 1
+    if a:is_bucket
+        call s:draw_bucket(a:dir, a:hm_to_draw, a:coord)
+    else
+        call s:draw_non_bucket(a:dir, a:hm_to_draw)
+    endif
+endfu
 
-        if dir ==# -1
-            " draw `┌───┤`
-            exe "norm! kR\u250c".repeat("\u2500", w)."\u2524"
-            " draw the `│` column
-            for i in range(1, hm_to_draw - 1)
-                exe "norm! kr\u2502"
-            endfor
-            " draw `┌`
-            exe "norm! kR\u250c "
+fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{1
+    let [ dir, hm_to_draw, coord ]  = [ a:dir, a:hm_to_draw, a:coord ]
 
-        else
-            " draw `└───┤`
-            exe "norm! jR\u2514".repeat("\u2500", w)."\u2524"
-            " draw the `│` column
-            for i in range(1, hm_to_draw - 1)
-                exe "norm! jr\u2502"
-            endfor
-            " draw `└`
-            exe "norm! jR\u2514 "
-        endif
+    " get the index of the current marked character inside the list of
+    " coordinates (w:bd_marks.coords)
+    let i = index(w:bd_marks.coords, coord)
+    " get the width of the `───` segment to draw above the item to describe
+    let w = w:bd_marks.coords[i+1].col - coord.col - 1
+
+    if dir ==# -1
+        " draw `┌───┤`
+        exe "norm! kR\u250c".repeat("\u2500", w)."\u2524"
+        " draw the `│` column
+        for i in range(1, hm_to_draw - 1)
+            exe "norm! kr\u2502"
+        endfor
+        " draw `┌`
+        exe "norm! kR\u250c "
 
     else
-        if dir ==# -1
-            " draw the `│` column
-            for i in range(1, hm_to_draw + 1)
-                exe "norm! kr\u2502"
-            endfor
-            exe "norm! R\u250c "
-        else
-            " draw the `│` column
-            for i in range(1, hm_to_draw + 1)
-                exe "norm! jr\u2502"
-            endfor
-            exe "norm! R\u2514 "
-        endif
+        " draw `└───┤`
+        exe "norm! jR\u2514".repeat("\u2500", w)."\u2524"
+        " draw the `│` column
+        for i in range(1, hm_to_draw - 1)
+            exe "norm! jr\u2502"
+        endfor
+        " draw `└`
+        exe "norm! jR\u2514 "
+    endif
+endfu
+
+fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{1
+    let [ dir, hm_to_draw ]  = [ a:dir, a:hm_to_draw ]
+
+    if dir ==# -1
+        " draw the `│` column
+        for i in range(1, hm_to_draw + 1)
+            exe "norm! kr\u2502"
+        endfor
+        exe "norm! R\u250c "
+    else
+        " draw the `│` column
+        for i in range(1, hm_to_draw + 1)
+            exe "norm! jr\u2502"
+        endfor
+        exe "norm! R\u2514 "
     endif
 endfu
 
@@ -122,7 +141,7 @@ fu! breakdown#expand(shape, dir) abort "{{{1
     call sort(w:bd_marks.coords, {x,y -> x.col - y.col})
 
     " In a  diagram containing  buckets, every  2 consecutive  marked characters
-    " stand for one piece of the latter.
+    " stand for one branch of the latter.
     " Therefore, the `for` loop which will progressively draw the diagram must
     " iterate over half of the coordinates.
 
@@ -176,16 +195,16 @@ fu! breakdown#expand(shape, dir) abort "{{{1
         endfor
     endif
 
-    " if there's a commentstring, comment the diagram lines (left side)
-    " except in a markdown buffer, because a diagram won't cause errors in
-    " a note file, so there's no need to
+    " if there's a  commentstring, comment the diagram lines  (left side) except
+    " in  a markdown  buffer, because  a diagram  won't cause  errors there,  so
+    " there's no need to
     if !empty(&l:cms) && index(['markdown', 'text'], &ft) ==# -1
         let [ cms_left, cms_right ] = split(&l:cms, '%s', 1)
         call s:comment(cms_left, 'left', dir, hm_to_draw)
     endif
 
     for coord in coords_to_process
-        " draw a piece of the diagram
+        " draw a branch of the diagram
         call s:draw(a:shape is# 'bucket', dir, coord, hm_to_draw)
 
         " populate the location list
@@ -208,33 +227,30 @@ fu! breakdown#expand(shape, dir) abort "{{{1
         "                                         in the previous for loop
     endif
 
-    sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
-
-    " clear match
-    call breakdown#clear()
+    " restore the  coordinates in  case we  changed the  addresses of  the lines
+    " during the  expansion; this restoration  allows us to  re-expand correctly
+    " the diagram later (after an undo), if we hit the wrong mapping by accident
+    let w:bd_marks.coords = coords_save
 
     " restore the original values of the options we changed
     let [ &ve, &l:tw, &l:wm ] = [ ve_save, tw_save, wm_save ]
-    " restore the coordinates in case we changed the addresses of the lines
-    " during the expansion; this restoration allows us to re-expand correctly
-    " the diagram later (after an undo), if we hit the wrong mapping by accident
-    let w:bd_marks.coords = coords_save
+
+    call breakdown#clear_match()
+    sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
 endfu
 
 fu! breakdown#mark() abort "{{{1
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
-        \                  'coords' : [],
-        \                  'pat'    : '',
-        \                  'id'     :  0,
-        \                }
+        \       'coords' : [],
+        \       'pat'    : '',
+        \       'id'     :  0,
+        \ }
     elseif w:bd_marks.id
-        " if `w:bd_marks.id` exists and is different from 0,
-        " delete the match because we're going to update it:
+        " if there's a match, delete it because we're going to update it:
         " we don't want to add a new match besides the old one
         call matchdelete(w:bd_marks.id)
-        " and add a bar at the end of the pattern, to prepare for a new
-        " piece
+        " and add a bar at the end of the pattern, to prepare for the new branch
         let w:bd_marks.pat .= '|'
     endif
 
@@ -243,17 +259,21 @@ fu! breakdown#mark() abort "{{{1
 
         " … and if the current position is already marked, then instead of
         " re-adding it as a mark, remove it (toggle).
-        if index(w:bd_marks.coords, {'line' : line('.'), 'col' : virtcol('.')} ) >= 0
+        if index( w:bd_marks.coords,
+        \         {'line' : line('.'), 'col' : virtcol('.')} )
+        \  >= 0
 
-            call filter(w:bd_marks.coords, { i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')}  })
+            call filter(w:bd_marks.coords,
+            \           { i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')} }
+            \ )
         else
 
-        " … otherwise, add the current position to the list of coordinates
+            " … otherwise, add the current position to the list of coordinates
 
             let w:bd_marks.coords += [{
-                                      \ 'line' : line('.'),
-                                      \ 'col'  : virtcol('.'),
-                                      \ }]
+            \       'line' : line('.'),
+            \       'col'  : virtcol('.'),
+            \ }]
         endif
 
     else
@@ -261,15 +281,14 @@ fu! breakdown#mark() abort "{{{1
     " completely the list of coordinates.
 
         let w:bd_marks.coords = [{
-                                 \ 'line' : line('.'),
-                                 \ 'col'  : virtcol('.'),
-                                 \ }]
+        \       'line' : line('.'),
+        \       'col'  : virtcol('.'),
+        \ }]
     endif
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
-    let w:bd_marks.pat = '\v'.join(map(deepcopy(w:bd_marks.coords),
-    \                                  { i,v -> '%'.v.line.'l%'.v.col.'v.' }),
-    \                              '|')
+    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), { i,v -> '%'. v.line .'l%'. v.col .'v.' })
+    let w:bd_marks.pat = '\v'.join(w:bd_marks.pat, '|')
     " When do we need to use `deepcopy()` instead of `copy()` ?{{{
     "
     " Every time we need to make a copy of the coordinates, we have to use
@@ -337,9 +356,9 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{1
         if is_bucket
             " We are going to store the byte index of the character where we
             " want the cursor to be positioned.
-            " To compute this byte index, we first need to know the index of
-            " the first of the 2 marked characters from which we draw a piece
-            " of the diagram; the one above/below `└`/`┌`.
+            " To compute this byte index, we first need to know the index of the
+            " first of  the 2 marked characters  from which we draw  a branch of
+            " the diagram; the one above/below `└`/`┌`.
 
             let i = index(w:bd_marks.coords, coord)
 
