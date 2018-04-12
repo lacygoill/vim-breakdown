@@ -299,7 +299,6 @@ fu! breakdown#mark() abort "{{{1
     "     2. consistency (`deepcopy()` later → `deepcopy()` now)
     "}}}
 
-
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
                     \ ?     matchadd('SpellBad', w:bd_marks.pat)
