@@ -222,34 +222,33 @@ fu! breakdown#expand(shape, dir) abort "{{{1
 endfu
 
 fu! breakdown#mark() abort "{{{1
-    " if `w:bd_marks.id` doesn't exist, initialize `w:bd_marks`
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
-        \                  'coords'  : [],
-        \                  'pattern' : '',
-        \                  'id'      :  0,
+        \                  'coords' : [],
+        \                  'pat'    : '',
+        \                  'id'     :  0,
         \                }
     elseif w:bd_marks.id
-        " otherwise if it exists and is different from 0
+        " if `w:bd_marks.id` exists and is different from 0,
         " delete the match because we're going to update it:
         " we don't want to add a new match besides the old one
         call matchdelete(w:bd_marks.id)
         " and add a bar at the end of the pattern, to prepare for a new
         " piece
-        let w:bd_marks.pattern .= '|'
+        let w:bd_marks.pat .= '|'
     endif
 
     " If we're on the same line as the previous marked characters…
     if !empty(w:bd_marks.coords) && line('.') ==# w:bd_marks.coords[0].line
 
         " … and if the current position is already marked, then instead of
-        " readding it as a mark, remove it (toggle).
+        " re-adding it as a mark, remove it (toggle).
         if index(w:bd_marks.coords, {'line' : line('.'), 'col' : virtcol('.')} ) >= 0
 
             call filter(w:bd_marks.coords, { i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')}  })
         else
 
-        " … otherwise add the current position to the list of coordinates
+        " … otherwise, add the current position to the list of coordinates
 
             let w:bd_marks.coords += [{
                                       \ 'line' : line('.'),
@@ -268,38 +267,42 @@ fu! breakdown#mark() abort "{{{1
     endif
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
+    let w:bd_marks.pat = '\v'.join(map(deepcopy(w:bd_marks.coords),
+    \                                  { i,v -> '%'.v.line.'l%'.v.col.'v.' }),
+    \                              '|')
+    " When do we need to use `deepcopy()` instead of `copy()` ?{{{
     "
-    " NOTE:
     " Every time we need to make a copy of the coordinates, we have to use
     " `deepcopy()`. We can't use `copy()`, because each item in the list of
     " coordinates is a dictionary, not just a simple data structure such as
     " a number or a string.
     "
     " `copy()` would create a new list of coordinates, but whose items would
-    " be identical to the original list.
+    " share the same references as the ones in the original list.
     "
     " So, changing an item in the copy would immediately affect the original list.
+    "}}}
+    " Do we need `deepcopy()` here?{{{
     "
-    " However, we probably don't need `deepcopy()` here. Only later when we
-    " may update the 'line' key of each dictionary (happens when we expand the
-    " diagram above).
+    " Here, probably not. But later, yes.
     "
-    " Here, we don't change any key of the dictionaries inside the list
-    " `w:bd_marks.coords`. We simply use each dictionary to build a string
-    " which populates a list (the one returned by `map()`).
+    " Here,  we  don't change  any  key  of  the  dictionaries inside  the  list
+    " `w:bd_marks.coords`. We simply use each dictionary to build a string which
+    " populates a list (the one returned by `map()`).
     "
-    " So, why `deepcopy()` instead of `copy()`?
+    " Later, we  may update the 'line'  key of each dictionary  (happens when we
+    " expand the diagram above).
+    "}}}
+    " Why using `deepcopy()` here?{{{
     "
-    "         1. better be safe than sorry
-    "         2. consistency (`deepcopy()` later → `deepcopy()` now)
+    "     1. better be safe than sorry
+    "     2. consistency (`deepcopy()` later → `deepcopy()` now)
+    "}}}
 
-    let w:bd_marks.pattern = '\v'.join(map(deepcopy(w:bd_marks.coords),
-    \                                      { i,v -> '%'.v.line.'l%'.v.col.'v.' }),
-    \                                  '|')
 
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
-                    \ ?     matchadd('SpellBad', w:bd_marks.pattern)
+                    \ ?     matchadd('SpellBad', w:bd_marks.pat)
                     \ :     0
 endfu
 
