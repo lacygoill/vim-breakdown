@@ -1,17 +1,46 @@
 " Interface {{{1
-fu! breakdown#clear_match() abort "{{{2
-    if exists('w:bd_marks.id')
-        call matchdelete(w:bd_marks.id)
-        " Why not removing `w:bd_marks` entirely?{{{
-        "
-        " At the end of `expand()`, we invoke this function to clear the match.
-        " So, if we remove `w:bd_marks` here,  we won't be able to re-expand the
-        " diagram without marking the characters again.
-        "
-        " IOW, the saved coordinates may still be useful; keep them.
-        "}}}
-        call remove(w:bd_marks, 'id')
-    endif
+fu! breakdown#mark() abort "{{{2
+    " `w:bd_marks` may need to be initialized.
+    " And if a match is already present, it needs to be removed.
+    call s:mark_init()
+    call s:update_coords()
+
+    " build a pattern using the coordinates in `w:bd_marks.coords`
+    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), { i,v -> '%'. v.line .'l%'. v.col .'v.' })
+    let w:bd_marks.pat = '\v'.join(w:bd_marks.pat, '|')
+    " When do we need to use `deepcopy()` instead of `copy()` ?{{{
+    "
+    " Every time we need to make a copy of the coordinates, we have to use
+    " `deepcopy()`. We can't use `copy()`, because each item in the list of
+    " coordinates is a dictionary, not just a simple data structure such as
+    " a number or a string.
+    "
+    " `copy()` would create a new list of coordinates, but whose items would
+    " share the same references as the ones in the original list.
+    "
+    " So, changing an item in the copy would immediately affect the original list.
+    "}}}
+    " Do we need `deepcopy()` here?{{{
+    "
+    " Here, probably not. But later, yes.
+    "
+    " Here,  we  don't change  any  key  of  the  dictionaries inside  the  list
+    " `w:bd_marks.coords`. We simply use each dictionary to build a string which
+    " populates a list (the one returned by `map()`).
+    "
+    " Later, we  may update the 'line'  key of each dictionary  (happens when we
+    " expand the diagram above).
+    "}}}
+    " Why using `deepcopy()` here?{{{
+    "
+    "     1. better be safe than sorry
+    "     2. consistency (`deepcopy()` later → `deepcopy()` now)
+    "}}}
+
+    " create a match and store its id in `w:bd_marks.id`
+    let w:bd_marks.id = !empty(w:bd_marks.coords)
+                    \ ?     matchadd('SpellBad', w:bd_marks.pat)
+                    \ :     0
 endfu
 
 fu! breakdown#expand(shape, dir) abort "{{{2
@@ -146,50 +175,23 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
 endfu
 
-fu! breakdown#mark() abort "{{{2
-    call s:mark_init()
-    call s:update_coords()
-
-    " build a pattern using the coordinates in `w:bd_marks.coords`
-    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), { i,v -> '%'. v.line .'l%'. v.col .'v.' })
-    let w:bd_marks.pat = '\v'.join(w:bd_marks.pat, '|')
-    " When do we need to use `deepcopy()` instead of `copy()` ?{{{
-    "
-    " Every time we need to make a copy of the coordinates, we have to use
-    " `deepcopy()`. We can't use `copy()`, because each item in the list of
-    " coordinates is a dictionary, not just a simple data structure such as
-    " a number or a string.
-    "
-    " `copy()` would create a new list of coordinates, but whose items would
-    " share the same references as the ones in the original list.
-    "
-    " So, changing an item in the copy would immediately affect the original list.
-    "}}}
-    " Do we need `deepcopy()` here?{{{
-    "
-    " Here, probably not. But later, yes.
-    "
-    " Here,  we  don't change  any  key  of  the  dictionaries inside  the  list
-    " `w:bd_marks.coords`. We simply use each dictionary to build a string which
-    " populates a list (the one returned by `map()`).
-    "
-    " Later, we  may update the 'line'  key of each dictionary  (happens when we
-    " expand the diagram above).
-    "}}}
-    " Why using `deepcopy()` here?{{{
-    "
-    "     1. better be safe than sorry
-    "     2. consistency (`deepcopy()` later → `deepcopy()` now)
-    "}}}
-
-    " create a match and store its id in `w:bd_marks.id`
-    let w:bd_marks.id = !empty(w:bd_marks.coords)
-                    \ ?     matchadd('SpellBad', w:bd_marks.pat)
-                    \ :     0
+fu! breakdown#clear_match() abort "{{{2
+    if exists('w:bd_marks.id')
+        call matchdelete(w:bd_marks.id)
+        " Why not removing `w:bd_marks` entirely?{{{
+        "
+        " At the end of `expand()`, we invoke this function to clear the match.
+        " So, if we remove `w:bd_marks` here,  we won't be able to re-expand the
+        " diagram without marking the characters again.
+        "
+        " IOW, the saved coordinates may still be useful; keep them.
+        "}}}
+        call remove(w:bd_marks, 'id')
+    endif
 endfu
 
 " Core {{{1
-fu! s:draw(is_bucket, dir, coord, hm_to_draw) "{{{2
+fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
 
     " reposition cursor before drawing the next branch
@@ -249,6 +251,38 @@ fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
         endfor
         exe "norm! R\u2514 "
     endif
+endfu
+
+fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
+    " Purpose:{{{
+    " This function is called once or twice per line of the diagram.
+    " Twice if we're in a buffer whose commentstring has 2 parts.
+    "
+    " Example:    <!-- html text -->
+    "             ^              ^
+    "             first part     2nd part
+    "
+    " Its purpose is to comment each line of the diagram.
+    " `what` is either the lhs or the rhs of a commentstring.
+    "}}}
+
+    " Before beginning commenting the lines of the diagram, make sure the cursor
+    " is on the line we're describing.
+    exe 'norm! '. w:bd_marks.coords[0].line .'G'
+
+    let indent = repeat(' ', indent('.'))
+
+    " iterate over the lines of the diagram
+    for i in range(0, a:hm_to_draw)
+        " move the cursor in the right direction
+        exe (a:dir ==# -1 ? '-' : '+')
+
+        let rep = a:where is# 'left'
+              \ ?     indent . a:what
+              \ :     substitute(getline('.'), '$', ' '.a:what, '')
+
+        call setline(line('.'), rep)
+    endfor
 endfu
 
 fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
@@ -317,38 +351,6 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
 endfu
 
 " Misc. {{{1
-fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
-    " Purpose:{{{
-    " This function is called once or twice per line of the diagram.
-    " Twice if we're in a buffer whose commentstring has 2 parts.
-    "
-    " Example:    <!-- html text -->
-    "             ^              ^
-    "             first part     2nd part
-    "
-    " Its purpose is to comment each line of the diagram.
-    " `what` is either the lhs or the rhs of a commentstring.
-    "}}}
-
-    " Before beginning commenting the lines of the diagram, make sure the cursor
-    " is on the line we're describing.
-    exe 'norm! '. w:bd_marks.coords[0].line .'G'
-
-    let indent = repeat(' ', indent('.'))
-
-    " iterate over the lines of the diagram
-    for i in range(0, a:hm_to_draw)
-        " move the cursor in the right direction
-        exe (a:dir ==# -1 ? '-' : '+')
-
-        let rep = a:where is# 'left'
-              \ ?     indent . a:what
-              \ :     substitute(getline('.'), '$', ' '.a:what, '')
-
-        call setline(line('.'), rep)
-    endfor
-endfu
-
 fu! s:mark_init() abort "{{{2
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
