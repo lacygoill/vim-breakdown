@@ -215,23 +215,23 @@ fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
 
     if dir ==# -1
         " draw `┌───┤`
-        exe "norm! kR\u250c".repeat("\u2500", w)."\u2524"
+        exe 'norm! kR┌'.repeat('─', w).'┤'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
-            exe "norm! kr\u2502"
+            norm! kr│
         endfor
         " draw `┌`
-        exe "norm! kR\u250c "
+        exe 'norm! kR┌ '
 
     else
         " draw `└───┤`
-        exe "norm! jR\u2514".repeat("\u2500", w)."\u2524"
+        exe 'norm! jR└'.repeat('─', w).'┤'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
-            exe "norm! jr\u2502"
+            norm! jr│
         endfor
         " draw `└`
-        exe "norm! jR\u2514 "
+        exe 'norm! jR└ '
     endif
 endfu
 
@@ -241,15 +241,15 @@ fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
     if dir ==# -1
         " draw the `│` column
         for i in range(1, hm_to_draw + 1)
-            exe "norm! kr\u2502"
+            norm! kr│
         endfor
-        exe "norm! R\u250c "
+        exe 'norm! R┌ '
     else
         " draw the `│` column
         for i in range(1, hm_to_draw + 1)
-            exe "norm! jr\u2502"
+            exe 'norm! jr│'
         endfor
-        exe "norm! R\u2514 "
+        exe 'norm! R└ '
     endif
 endfu
 
