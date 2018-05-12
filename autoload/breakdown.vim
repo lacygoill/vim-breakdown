@@ -281,7 +281,7 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
               \ ?     indent . a:what
               \ :     substitute(getline('.'), '$', ' '.a:what, '')
 
-        call setline(line('.'), rep)
+        call setline('.', rep)
     endfor
 endfu
 
