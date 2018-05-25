@@ -214,8 +214,9 @@ fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
     let w = w:bd_marks.coords[i+1].col - coord.col - 1
 
     if dir ==# -1
-        " draw `┌───┤`
-        exe 'norm! kR┌'.repeat('─', w).'┤'
+        " draw `├───┐`
+        exe 'norm! kR├'.repeat('─', w).'┐'
+        exe 'norm! '.(w+1).'h'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
             norm! kr│
@@ -224,8 +225,9 @@ fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
         exe 'norm! kR┌ '
 
     else
-        " draw `└───┤`
-        exe 'norm! jR└'.repeat('─', w).'┤'
+        " draw `├───┘`
+        exe 'norm! jR├'.repeat('─', w).'┘'
+        exe 'norm! '.(w+1).'h'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
             norm! jr│
