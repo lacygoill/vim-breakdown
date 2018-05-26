@@ -12,26 +12,8 @@ nno  <silent><unique>  m}      :<c-u>call breakdown#expand('simple', 'below')<cr
 nno  <silent><unique>  m(      :<c-u>call breakdown#expand('bucket', 'above')<cr>
 nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr>
 
-" TODO: Change how the bucket diagrams are drawn: {{{
-"
-"            └─────┤
-"                  └  some description
-"
-"                  →
-"
-"
-"            ├─────┘
-"            └ some description
-"
-"
-"
-" And for the reverse direction, draw it like this:
-"
-"            └─────┤
-"                  ┘
-"
-" In both cases, it would give us more space to write.
-"}}}
+" TODO: If possible, use `append()` or `setline()` instead of `:norm` to draw a diagram.  It's faster.
+
 " TODO: Add support for text written before diagram (instead of after){{{
 "
 " For the lhs use:    m((
@@ -56,13 +38,13 @@ nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr
 " Example of bucket diagram:
 "
 "                                     search('=\%#>', 'bn', line('.'))
-"                                            └─────┤  └──┤  └───────┤
-"                                                  │     │          └ search in the current line only
-"                                                  │     │
-"                                                  │     └ backwards without moving the cursor and
-"                                                  │
-"                                                  └ match any `=[>]`, where `[]` denotes the
-"                                                    cursor's position
+"                                            ├─────┘  ├──┘  ├───────┘
+"                                            │        │     └ search in the current line only
+"                                            │        │
+"                                            │        └ backwards without moving the cursor and
+"                                            │
+"                                            └ match any `=[>]`, where `[]` denotes the
+"                                              cursor's position
 "
 " Example of reverse bucket diagram:
 "
