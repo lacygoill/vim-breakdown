@@ -290,18 +290,18 @@ endfu
 fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     let [ is_bucket, coord, dir, hm_to_draw ] = [ a:is_bucket, a:coord, a:dir, a:hm_to_draw ]
 
-    " Example of bucket diagram:
+    " Example of bucket diagram:{{{
     "
     "     search('=\%#>', 'bn', line('.'))
-    "            └─────┤  └──┤  └───────┤
-    "                  │     │          └ search in the current line only
-    "                  │     │
-    "                  │     └ backwards without moving the cursor and
-    "                  │
-    "                  └ match any `=[>]`, where `[]` denotes the
-    "                    cursor's position
-
-    " NOTE:
+    "            ├─────┘  ├──┘  ├───────┘
+    "            │        │     └ search in the current line only
+    "            │        │
+    "            │        └ backwards without moving the cursor and
+    "            │
+    "            └ match any `=[>]`, where `[]` denotes the
+    "              cursor's position
+    "}}}
+    " NOTE:{{{
     " When we stored the position of the marked characters, we've used `virtcol()`,
     " so `coord.col` is a visual column, not a byte index.
     " But we need the byte index of the beginning of a line in the diagram.
@@ -315,7 +315,8 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     " And spaces aren't multibyte. So, the byte index of the beginning of
     " a line in the diagram matches the visual column of the corresponding
     " marked character.
-
+    "
+"}}}
         if is_bucket
             " We are going to store the byte index of the character where we
             " want the cursor to be positioned.
@@ -325,12 +326,12 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
 
             let i = index(w:bd_marks.coords, coord)
 
-            let col = w:bd_marks.coords[i+1].col + (len(w:bd_marks.coords)/2 - hm_to_draw)*2
-            "         │                            │
-            "         │                            └ before `└`/`┌`, there could be some `│`:
-            "         │                              add 2 bytes for each of them
+            let col = w:bd_marks.coords[i].col + (len(w:bd_marks.coords)/2 - hm_to_draw)*2 + 4
+            "         │                          │
+            "         │                          └ before `[└┌]`, there could be some `│`:
+            "         │                            add 2 bytes for each of them
             "         │
-            "         └ byte index of the next marked character (the one above/below `┤`)
+            "         └ byte index of the next marked character (the one above/below `[┤├]`)
             " NOTE:
             " The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
             " Because with `coord.col`, we already added one byte for each of them.
