@@ -14,6 +14,9 @@ nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr
 
 " TODO: If possible, use `append()` or `setline()` instead of `:norm` to draw a diagram.  It's faster.
 
+" TODO: We should be able to create a diagram mixing simple branches and buckets.
+" We would need 2 keys: one to set a simple branch, one for the two ends of a bucket.
+
 " TODO: Add support for text written before diagram (instead of after){{{
 "
 " For the lhs use:    m((
