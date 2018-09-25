@@ -49,7 +49,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
         return
     endif
 
-    let [ dir, shape ] = [ a:dir is# 'above' ? -1 : 0, a:shape ]
+    let [dir, shape] = [a:dir is# 'above' ? -1 : 0, a:shape]
     " we save the coordinates, because we may update them during the expansion
     " it happens when the diagram must be drawn above (not below)
     let coords_save = deepcopy(w:bd_marks.coords)
@@ -65,7 +65,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
 
     " make sure 've' allows us to draw freely
     " also, make sure 'tw' and 'wm' don't break a long line
-    let [ ve_save, tw_save, wm_save ] = [ &ve, &l:tw, &l:wm ]
+    let [ve_save, tw_save, wm_save] = [&ve, &l:tw, &l:wm]
     setl ve=all tw=0 wm=0
 
     " initialize empty location list
@@ -135,7 +135,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     " in  a markdown  buffer, because  a diagram  won't cause  errors there,  so
     " there's no need to
     if !empty(&l:cms) && index(['markdown', 'text'], &ft) ==# -1
-        let [ cms_left, cms_right ] = split(&l:cms, '%s', 1)
+        let [cms_left, cms_right] = split(&l:cms, '%s', 1)
         call s:comment(cms_left, 'left', dir, hm_to_draw)
     endif
 
@@ -169,7 +169,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     let w:bd_marks.coords = coords_save
 
     " restore the original values of the options we changed
-    let [ &ve, &l:tw, &l:wm ] = [ ve_save, tw_save, wm_save ]
+    let [&ve, &l:tw, &l:wm] = [ve_save, tw_save, wm_save]
 
     call breakdown#clear_match()
     sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
@@ -205,7 +205,7 @@ fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
 endfu
 
 fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
-    let [ dir, hm_to_draw, coord ]  = [ a:dir, a:hm_to_draw, a:coord ]
+    let [dir, hm_to_draw, coord]  = [a:dir, a:hm_to_draw, a:coord]
 
     " get the index of the current marked character inside the list of
     " coordinates (w:bd_marks.coords)
@@ -238,7 +238,7 @@ fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
 endfu
 
 fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
-    let [ dir, hm_to_draw ]  = [ a:dir, a:hm_to_draw ]
+    let [dir, hm_to_draw]  = [a:dir, a:hm_to_draw]
 
     if dir ==# -1
         " draw the `│` column
@@ -288,7 +288,7 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
 endfu
 
 fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
-    let [ is_bucket, coord, dir, hm_to_draw ] = [ a:is_bucket, a:coord, a:dir, a:hm_to_draw ]
+    let [is_bucket, coord, dir, hm_to_draw] = [a:is_bucket, a:coord, a:dir, a:hm_to_draw]
 
     " Example of bucket diagram:{{{
     "
