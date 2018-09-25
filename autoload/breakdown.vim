@@ -218,8 +218,8 @@ fu! breakdown#put_error_sign(type) abort "{{{2
             " Without these  motions, `.` will move the cursor  at the beginning
             " of the line.
             "}}}
-            " +
-            " -
+            +
+            -
         else
             +,++d_
             -
