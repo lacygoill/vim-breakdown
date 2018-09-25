@@ -236,25 +236,30 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         exe 'norm! '.vcol.'|'
         " Alternatively:{{{
         "
-        " You could have executed `+-` or `-+` right after the deletion:
+        " You could also have executed one of these right after the deletion:
         "
         "     --,-d_
         "     +-
         "
+        "     --,-d_
+        "     -+
+        "
+        "     --,-d_
+        "     -
+        "     +
+        "
+        "     --,-d_
+        "     +
+        "     -
+        "
         " It would have prevented the cursor from jumping to the beginning of
         " the line when pressing `.`.
         "
-        " TODO:
-        " Question1:
-        " `+-` doesn't make the cursor move, so why does it work?
-        " Note that `+-` seems equivalent to:
+        " Question: How does it work?
         "
-        "     + " makes cursor move to first non-whitespace on next line
-        "     - " makes cursor move to first non-whitespace on previous line
-        "
-        " Question2:
         " MWE:
         "
+        "     set nosol
         "     nno  <silent>  cd  :<c-u>set opfunc=Func<cr>g@l
         "     fu! Func(type) abort
         "         --,-d_
@@ -269,9 +274,24 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         " and press `cd`.
         " Again, you can fix the issue by adding `+-` right after `:d`.
         "
-        " However, if you execute the 4 commands manually (:d, +-, append() x 2),
+        " Answer: from `:h 'sol`
+        "
+        "     ... When off the cursor is kept in the same column (if possible).
+        "     This applies to the commands: ...
+        "     Also for an Ex command that only has a line number, e.g., ":25" or ":+".
+        "     In case  of BUFFER CHANGING  COMMANDS the  cursor is placed  at the
+        "     column where it was the last time the buffer was edited.
+        "
+        " TODO:
+        " Question:
+        " Ok, `+-` doesn't make the column of the cursor change.
+        " But it doesn't matter, the column of the cursor has ALREADY changed
+        " when `:d` is executed!
+        "
+        " Besides, if you execute the 4 commands manually (:d, +-, append() x 2),
         " the issue is not fixed anymore.
-        " Why  does `+-` work  differently depending  on whether it's  inside an
+        "
+        " So why does `+-` work differently  depending on whether it's inside an
         " operator function, or outside?
         "}}}
     else
