@@ -12,6 +12,14 @@ nno  <silent><unique>  m}      :<c-u>call breakdown#expand('simple', 'below')<cr
 nno  <silent><unique>  m(      :<c-u>call breakdown#expand('bucket', 'above')<cr>
 nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr>
 
+" Why not `+^`?{{{
+"
+" I often press `g^` by accident, which atm makes us focus the first tabpage.
+" Too distracting.
+"}}}
+nno <silent><unique>  +v  :<c-u>call breakdown#put_error_sign_where('below')<bar>set opfunc=breakdown#put_error_sign<cr>g@l
+nno <silent><unique>  +V  :<c-u>call breakdown#put_error_sign_where('above')<bar>set opfunc=breakdown#put_error_sign<cr>g@l
+
 " TODO: If possible, use `append()` or `setline()` instead of `:norm` to draw a diagram.  It's faster.
 
 " TODO: We should be able to create a diagram mixing simple branches and buckets.
@@ -81,4 +89,4 @@ nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr
 "             backwards without moving the cursor and ┘     │
 "                                                           │
 "                           search in the current line only ┘
-"}}}
+

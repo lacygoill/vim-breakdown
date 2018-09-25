@@ -190,6 +190,59 @@ fu! breakdown#clear_match() abort "{{{2
     endif
 endfu
 
+fu! breakdown#put_error_sign(type) abort "{{{2
+    let error_sign = '✘'
+    let pointer = s:put_error_sign_location is# 'above'
+        \ ? 'v'
+        \ : '^'
+    let vcol = virtcol('.')
+    let cml = matchstr(get(split(&l:cms, '%s'), 0, ''), '\S*')
+    let next_line = getline(line('.') + (s:put_error_sign_location is# 'above' ? -2 : 2))
+
+    if next_line =~# error_sign
+        " if our cursor is on the 20th cell, while the next lines occupy only 10
+        " cells  the next  substitutions will  fail,  because it  will target  a
+        " non-existing character
+        let next_line_length = strchars(next_line, 1)
+        if vcol > next_line_length
+            let next_line .= repeat(' ', vcol - next_line_length)
+        endif
+
+        let pat = '\%'.vcol.'v'.repeat('.', strchars(error_sign, 1))
+        let new_line = substitute(next_line, pat, error_sign, '')
+
+        if s:put_error_sign_location is# 'above'
+            --,-d_
+            " Why do you move to get back where you were?{{{
+            "
+            " Without these  motions, `.` will move the cursor  at the beginning
+            " of the line.
+            "}}}
+            " +
+            " -
+        else
+            +,++d_
+            -
+        endif
+    else
+        let indent = indent('.')
+        let spaces_between_cml_and_mark = repeat(' ', virtcol('.')-1-strchars(cml, 1)-indent)
+        let indent = repeat(' ', indent)
+        let new_line = indent.cml.spaces_between_cml_and_mark.error_sign
+    endif
+
+    if s:put_error_sign_location is# 'above'
+        let here = line('.')-1
+        call append(here, new_line)
+        call append(here+1, substitute(new_line, error_sign, pointer, 'g'))
+    else
+        let here = line('.')
+        call append(here, substitute(new_line, error_sign, pointer, 'g'))
+        call append(here+1, new_line)
+    endif
+endfu
+
+
 " Core {{{1
 fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
@@ -368,6 +421,10 @@ fu! s:mark_init() abort "{{{2
         " and add a bar at the end of the pattern, to prepare for the new branch
         let w:bd_marks.pat .= '|'
     endif
+endfu
+
+fu! breakdown#put_error_sign_where(dir) abort "{{{2
+    let s:put_error_sign_location = a:dir
 endfu
 
 fu! s:update_coords() abort "{{{2
