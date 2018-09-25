@@ -213,13 +213,6 @@ fu! breakdown#put_error_sign(type) abort "{{{2
 
         if s:put_error_sign_location is# 'above'
             --,-d_
-            " Why do you move to get back where you were?{{{
-            "
-            " Without these  motions, `.` will move the cursor  at the beginning
-            " of the line.
-            "}}}
-            +
-            -
         else
             +,++d_
             -
@@ -235,13 +228,56 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         let here = line('.')-1
         call append(here, new_line)
         call append(here+1, substitute(new_line, error_sign, pointer, 'g'))
+        " Why this motion?{{{
+        "
+        " Without, `.` will move the cursor at the beginning of the line,
+        " probably because of the previous `:delete` command.
+        "}}}
+        exe 'norm! '.vcol.'|'
+        " Alternatively:{{{
+        "
+        " You could have executed `+-` or `-+` right after the deletion:
+        "
+        "     --,-d_
+        "     +-
+        " It would have prevented the cursor from jumping to the beginning of
+        " the line when pressing `.`.
+        "
+        " TODO:
+        " Question1:
+        " `+-` doesn't make the cursor move, so why does it work?
+        " Note that `+-` seems equivalent to:
+        "
+        "     + " makes cursor move to first non-whitespace on next line
+        "     - " makes cursor move to first non-whitespace on previous line
+        "
+        " Question2:
+        " I can reproduce the issue with:
+        "
+        "     nno  <silent>  cd  :<c-u>set opfunc=Func<cr>g@l
+        "     fu! Func(type) abort
+        "         --,-d_
+        "         call append(line('.')-1, '    " the date is:')
+        "         call append(line('.')-1, '    " '.strftime('%c'))
+        "         " the date is:
+        "         " Wed 26 Sep 2018 12:58:35 AM CEST
+        "         " foo bar baz qux norf
+        "     endfu
+        "
+        " Source the code, move your cursor on the `foo bar ...` line,
+        " and press `cd`.
+        " The cursor jumps at the beginning of the line.
+        " Why doesn't our cursor jump when we press `+V` initially?
+        " It jumps only afterwards when we press `.`.
+        "
+        " And again, you can fix the issue by adding `+-` right after `:d`.
+        "}}}
     else
         let here = line('.')
         call append(here, substitute(new_line, error_sign, pointer, 'g'))
         call append(here+1, new_line)
     endif
 endfu
-
 
 " Core {{{1
 fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
