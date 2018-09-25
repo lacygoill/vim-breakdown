@@ -245,13 +245,14 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         " the line when pressing `.`.
         "
         " TODO:
-        " Question:
+        " Question1:
         " `+-` doesn't make the cursor move, so why does it work?
         " Note that `+-` seems equivalent to:
         "
         "     + " makes cursor move to first non-whitespace on next line
         "     - " makes cursor move to first non-whitespace on previous line
         "
+        " Question2:
         " MWE:
         "
         "     nno  <silent>  cd  :<c-u>set opfunc=Func<cr>g@l
@@ -267,6 +268,11 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         " Source the code, move your cursor on the `foo bar ...` line,
         " and press `cd`.
         " Again, you can fix the issue by adding `+-` right after `:d`.
+        "
+        " However, if you execute the 4 commands manually (:d, +-, append() x 2),
+        " the issue is not fixed anymore.
+        " Why  does `+-` work  differently depending  on whether it's  inside an
+        " operator function, or outside?
         "}}}
     else
         let here = line('.')
