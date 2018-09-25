@@ -240,6 +240,7 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         "
         "     --,-d_
         "     +-
+        "
         " It would have prevented the cursor from jumping to the beginning of
         " the line when pressing `.`.
         "
