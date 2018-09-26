@@ -196,7 +196,7 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         \ ? 'v'
         \ : '^'
     let vcol = virtcol('.')
-    let cml = matchstr(get(split(&l:cms, '%s'), 0, ''), '\S*')
+    let cml = &ft is# 'markdown' ? '' : matchstr(get(split(&l:cms, '%s'), 0, ''), '\S*')
     let next_line = getline(line('.') + (s:put_error_sign_location is# 'above' ? -2 : 2))
 
     if next_line =~# error_sign
