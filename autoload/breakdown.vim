@@ -298,6 +298,7 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         let here = line('.')
         call append(here, substitute(new_line, error_sign, pointer, 'g'))
         call append(here+1, new_line)
+        exe 'norm! '.vcol.'|'
     endif
 endfu
 
