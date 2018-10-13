@@ -302,6 +302,33 @@ fu! breakdown#put_error_sign(type) abort "{{{2
     endif
 endfu
 
+fu! breakdown#put_v(dir) abort "{{{2
+    if line("'<") != line("'>")
+        return
+    endif
+    let line = substitute(getline('.'), '.', ' ', 'g')
+    let col1 = min([col("'<"), col("'>")])
+    let col2 = max([col("'<"), col("'>")])
+    " Describes all the characters which were visually selected.{{{
+    "
+    " The pattern contains 3 branches because such a character could be:
+    "
+    "       • after the mark '< and before the mark '>
+    "       • on the mark '<
+    "       • on the mark '>
+    "}}}
+    let pat = '\%>'.col1.'c\%<'.col2.'c.\|\%'.col1.'c.\|\%'.col2.'c.'
+    let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
+    let line = substitute(line, '\s*$', '', '')
+    if &l:cms isnot# ''
+        let [cml_start, cml_end] = split(&l:cms, '%s', 1)
+        let line = cml_start
+            \ .line[1:]
+            \ .(!empty(cml_end) ? ' ' : '').cml_end
+    endif
+    call append(a:dir is# 'below' ? '.' : line('.')-1, line)
+endfu
+
 " Core {{{1
 fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
