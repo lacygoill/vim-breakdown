@@ -307,8 +307,8 @@ fu! breakdown#put_v(dir) abort "{{{2
         return
     endif
     let line = substitute(getline('.'), '.', ' ', 'g')
-    let col1 = min([col("'<"), col("'>")])
-    let col2 = max([col("'<"), col("'>")])
+    let col1 = min([virtcol("'<"), virtcol("'>")])
+    let col2 = max([virtcol("'<"), virtcol("'>")])
     " Describes all the characters which were visually selected.{{{
     "
     " The pattern contains 3 branches because such a character could be:
@@ -317,7 +317,7 @@ fu! breakdown#put_v(dir) abort "{{{2
     "       • on the mark '<
     "       • on the mark '>
     "}}}
-    let pat = '\%>'.col1.'c\%<'.col2.'c.\|\%'.col1.'c.\|\%'.col2.'c.'
+    let pat = '\%>'.col1.'v\%<'.col2.'v.\|\%'.col1.'v.\|\%'.col2.'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
     let line = substitute(line, '\s*$', '', '')
     if &l:cms isnot# ''
