@@ -520,12 +520,12 @@ fu! s:update_coords() abort "{{{2
         " … and if the current position is already marked, then instead of
         " re-adding it as a mark, remove it (toggle).
         if index( w:bd_marks.coords,
-        \         {'line' : line('.'), 'col' : virtcol('.')} )
-        \  >= 0
+            \ {'line' : line('.'), 'col' : virtcol('.')})
+            \  >= 0
 
             call filter(w:bd_marks.coords,
-            \           { i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')} }
-            \ )
+                \ {i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')}}
+                \ )
         else
 
             " … otherwise, add the current position to the list of coordinates
