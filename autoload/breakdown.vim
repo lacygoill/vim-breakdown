@@ -221,7 +221,7 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         let indent = indent('.')
         let spaces_between_cml_and_mark = repeat(' ', virtcol('.')-1-strchars(cml, 1)-indent)
         let indent = repeat(' ', indent)
-        let new_line = indent.cml.spaces_between_cml_and_mark.error_sign
+        let new_line = indent . cml . spaces_between_cml_and_mark . error_sign
     endif
 
     if s:put_error_sign_location is# 'above'
@@ -320,7 +320,7 @@ fu! breakdown#put_v(dir) abort "{{{2
     let pat = '\%>'.col1.'v\%<'.col2.'v.\|\%'.col1.'v.\|\%'.col2.'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
     let line = substitute(line, '\s*$', '', '')
-    if &l:cms isnot# ''
+    if &l:cms isnot# '' && &ft isnot# 'markdown'
         let [cml_start, cml_end] = split(&l:cms, '%s', 1)
         let line = cml_start
             \ .line[strlen(cml_start):]
