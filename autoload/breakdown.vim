@@ -322,9 +322,11 @@ fu! breakdown#put_v(dir) abort "{{{2
     let line = substitute(line, '\s*$', '', '')
     if &l:cms isnot# '' && &ft isnot# 'markdown'
         let [cml_start, cml_end] = split(&l:cms, '%s', 1)
-        let line = cml_start
-            \ .line[strlen(cml_start):]
-            \ .(!empty(cml_end) ? ' ' : '').cml_end
+        let indent = indent('.')
+        let line = repeat(' ', indent)
+            \ . cml_start
+            \ . line[strlen(cml_start) + indent :]
+            \ . (!empty(cml_end) ? ' ' : '').cml_end
     endif
     call append(a:dir is# 'below' ? '.' : line('.')-1, line)
 endfu
