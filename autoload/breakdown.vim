@@ -92,7 +92,8 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     " And   if   we   do,   without   `deepcopy()`,   it   would   also   affect
     " `w:bd_marks.coords` because they would be the same list:
     "
-    "         echo w:bd_marks.coords is coords_to_process    →    1
+    "         echo w:bd_marks.coords is coords_to_process
+    "         1~
     "
     " Without `deepcopy()`, we would need to remove `coords_to_process` from the
     " next `for` loop:
