@@ -328,10 +328,20 @@ fu! breakdown#put_v(dir) abort "{{{2
             \ . cml_start
             \ . line[strlen(cml_start) + indent :]
             \ . (!empty(cml_end) ? ' ' : '').cml_end
+        " if  there are  already  marks on  the line  below/above,  don't add  a
+        " new  line  with `append()`,  instead  replace  the current  line  with
+        " `setline()`, merging its existing marks with the new ones
+        let offset = (a:dir is# 'below' ? 1 : -1)
+        let existing_line = getline(line('.') + offset)
+        if existing_line =~# '^\s*\V'.escape(cml_start, '\').'\m[ v^]*$'
+            let line = s:merge_lines(line, existing_line)
+            call setline(line('.') + offset, line)
+            return
+        endif
     endif
     call append(a:dir is# 'below' ? '.' : line('.')-1, line)
 endfu
-
+" }}}1
 " Core {{{1
 fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
@@ -429,6 +439,23 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
     endfor
 endfu
 
+fu! s:merge_lines(line, existing_line) abort "{{{2
+    let [longest, shortest] = strlen(a:line) > strlen(a:existing_line)
+        \ ? [a:line, a:existing_line]
+        \ : [a:existing_line, a:line]
+    let i = 0
+    let longest = split(longest, '\zs')
+    for char in split(shortest, '\zs')
+        if char is# '^'
+            let longest[i] = '^'
+        elseif char is# 'v'
+            let longest[i] = 'v'
+        endif
+        let i += 1
+    endfor
+    return join(longest, '')
+endfu
+
 fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     let [is_bucket, coord, dir, hm_to_draw] = [a:is_bucket, a:coord, a:dir, a:hm_to_draw]
 
@@ -494,7 +521,7 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
         \            'col'   : col,
         \ })
 endfu
-
+" }}}1
 " Misc. {{{1
 fu! s:mark_init() abort "{{{2
     if !exists('w:bd_marks.id')
