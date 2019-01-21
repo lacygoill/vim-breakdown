@@ -321,7 +321,13 @@ fu! breakdown#put_v(dir) abort "{{{2
     let pat = '\%>'.col1.'v\%<'.col2.'v.\|\%'.col1.'v.\|\%'.col2.'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
     let line = substitute(line, '\s*$', '', '')
-    if &l:cms isnot# '' && &ft isnot# 'markdown'
+    if &ft is# 'markdown'
+        let offset = (a:dir is# 'below' ? 1 : -1)
+        let existing_line = getline(line('.') + offset)
+        let line = s:merge_lines(line, existing_line)
+        call setline(line('.') + offset, line)
+        return
+    elseif &l:cms isnot# ''
         let [cml_start, cml_end] = split(&l:cms, '%s', 1)
         let indent = indent('.')
         let line = repeat(' ', indent)
