@@ -314,9 +314,9 @@ fu! breakdown#put_v(dir) abort "{{{2
     "
     " The pattern contains 3 branches because such a character could be:
     "
-    "       • after the mark '< and before the mark '>
-    "       • on the mark '<
-    "       • on the mark '>
+    "       - after the mark '< and before the mark '>
+    "       - on the mark '<
+    "       - on the mark '>
     "}}}
     let pat = '\%>'.col1.'v\%<'.col2.'v.\|\%'.col1.'v.\|\%'.col2.'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
