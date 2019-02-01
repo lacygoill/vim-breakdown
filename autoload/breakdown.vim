@@ -173,7 +173,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     let [&ve, &l:tw, &l:wm] = [ve_save, tw_save, wm_save]
 
     call breakdown#clear_match()
-    sil! call lg#motion#repeatable#make#set_last_used(']l', {'bwd': ',', 'fwd': ';'})
+    sil! call lg#motion#repeatable#make#set_last_used(']l')
 endfu
 
 fu! breakdown#clear_match() abort "{{{2
