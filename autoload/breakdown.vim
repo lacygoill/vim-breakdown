@@ -481,15 +481,15 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     " so `coord.col` is a visual column, not a byte index.
     " But we need the byte index of the beginning of a line in the diagram.
     "
-    " If there are multibyte characters before a marked character, does it cause
-    " an issue for the byte index of the beginning of a line in the diagram in
-    " the location list?
+    " If  there are  multi-byte characters  before a  marked character,  does it
+    " cause  an issue  for the  byte index  of the  beginning of  a line  in the
+    " diagram in the location list?
     "
     " No. Because before the beginning of a line in the diagram, there are only
     " spaces (and optionally comment characters).
-    " And spaces aren't multibyte. So, the byte index of the beginning of
-    " a line in the diagram matches the visual column of the corresponding
-    " marked character.
+    " And spaces  aren't multi-byte. So, the  byte index  of the beginning  of a
+    " line in the diagram matches the  visual column of the corresponding marked
+    " character.
     "
 "}}}
         if is_bucket
@@ -508,7 +508,7 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
             "         │
             "         └ byte index of the next marked character (the one above/below `[┤├]`)
             " NOTE:
-            " The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
+            " The weight of our multi-byte characters is 3, so why do we add only 2 bytes for each of them?
             " Because with `coord.col`, we already added one byte for each of them.
         else
             let col = coord.col + 2*(len(w:bd_marks.coords) - hm_to_draw) + (1*2)+1
