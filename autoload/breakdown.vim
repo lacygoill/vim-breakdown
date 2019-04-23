@@ -332,7 +332,7 @@ fu! breakdown#put_v(dir) abort "{{{2
         let indent = indent('.')
         let line = repeat(' ', indent)
             \ . cml_start
-            \ . line[strlen(cml_start) + indent :]
+            \ . line[strchars(cml_start,  1) + indent :]
             \ . (!empty(cml_end) ? ' ' : '').cml_end
         " if  there are  already  marks on  the line  below/above,  don't add  a
         " new  line  with `append()`,  instead  replace  the current  line  with
@@ -446,7 +446,7 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
 endfu
 
 fu! s:merge_lines(line, existing_line) abort "{{{2
-    let [longest, shortest] = strlen(a:line) > strlen(a:existing_line)
+    let [longest, shortest] = strchars(a:line, 1) > strchars(a:existing_line, 1)
         \ ? [a:line, a:existing_line]
         \ : [a:existing_line, a:line]
     let i = 0
