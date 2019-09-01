@@ -82,7 +82,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     " iterate over half of the coordinates.
 
     let coords_to_process = a:shape is# 'bucket'
-                        \ ?     filter(deepcopy(w:bd_marks.coords), {i,_ -> i%2 ==# 0})
+                        \ ?     filter(deepcopy(w:bd_marks.coords), {i -> i%2 ==# 0})
                         \ :     deepcopy(w:bd_marks.coords)
     "                           │
     "                           └── why `deepcopy()`?{{{
