@@ -6,7 +6,7 @@ fu! breakdown#mark() abort "{{{2
     call s:update_coords()
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
-    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), { i,v -> '%'. v.line .'l%'. v.col .'v.' })
+    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), {_,v -> '%'. v.line .'l%'. v.col .'v.'})
     let w:bd_marks.pat = '\v'.join(w:bd_marks.pat, '|')
     " When do we need to use `deepcopy()` instead of `copy()` ?{{{
     "
@@ -82,7 +82,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     " iterate over half of the coordinates.
 
     let coords_to_process = a:shape is# 'bucket'
-                        \ ?     filter(deepcopy(w:bd_marks.coords), {i,v -> i%2 ==# 0})
+                        \ ?     filter(deepcopy(w:bd_marks.coords), {i,_ -> i%2 ==# 0})
                         \ :     deepcopy(w:bd_marks.coords)
     "                           │
     "                           └── why `deepcopy()`?{{{
@@ -560,7 +560,7 @@ fu! s:update_coords() abort "{{{2
             \  >= 0
 
             call filter(w:bd_marks.coords,
-                \ {i,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')}}
+                \ {_,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')}}
                 \ )
         else
 
