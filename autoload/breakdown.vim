@@ -20,7 +20,7 @@ fu! breakdown#mark() abort "{{{2
     "
     " So, changing an item in the copy would immediately affect the original list.
     "}}}
-    " Do we need `deepcopy()` here?{{{
+    " Here, do we need `deepcopy()`?{{{
     "
     " Here, probably not. But later, yes.
     "
@@ -31,10 +31,10 @@ fu! breakdown#mark() abort "{{{2
     " Later, we  may update the 'line'  key of each dictionary  (happens when we
     " expand the diagram above).
     "}}}
-    " Why using `deepcopy()` here?{{{
+    "   Here, Why do you use it?{{{
     "
-    "     1. better be safe than sorry
-    "     2. consistency (`deepcopy()` later → `deepcopy()` now)
+    "    1. better be safe than sorry
+    "    2. consistency (`deepcopy()` later → `deepcopy()` now)
     "}}}
 
     " create a match and store its id in `w:bd_marks.id`
@@ -85,29 +85,28 @@ fu! breakdown#expand(shape, dir) abort "{{{2
                         \ ?     filter(deepcopy(w:bd_marks.coords), {i -> i%2 ==# 0})
                         \ :     deepcopy(w:bd_marks.coords)
     "                           │
-    "                           └── why `deepcopy()`?{{{
+    "                           └ why `deepcopy()`?{{{
     "
     " Because   we   may   update    the   line   coordinates,   later,   inside
     " `coords_to_process` (necessary if the diagram is drawn above).
     " And   if   we   do,   without   `deepcopy()`,   it   would   also   affect
     " `w:bd_marks.coords` because they would be the same list:
     "
-    "         echo w:bd_marks.coords is coords_to_process
-    "         1~
+    "     echo w:bd_marks.coords is coords_to_process
+    "     1~
     "
     " Without `deepcopy()`, we would need to remove `coords_to_process` from the
     " next `for` loop:
     "
-    "         for coord in coords_to_process + w:bd_marks.coords
-    "         →
-    "         for coord in w:bd_marks.coords
+    "     for coord in coords_to_process + w:bd_marks.coords
+    "     →
+    "     for coord in w:bd_marks.coords
     "
     " To avoid that the elements are incremented twice, instead of once.
     "
     " But even then, the plugin wouldn't work as expected, because when we would
     " try to draw a bucket diagram above a line, it would be too high.
     "}}}
-
 
     " How Many lines of the diagram are still TO be DRAWn
     let hm_to_draw = len(coords_to_process)
@@ -118,16 +117,16 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     " open enough new lines to draw diagram
     call append(line('.') + dir, repeat([''], hm_to_draw + 1))
 
-    " if we've just opened new lines above (instead of below) …
+    " if we've just opened new lines above (instead of below) ...
     if dir ==# -1
-        " … the address of the line of the marked characters must be updated
+        " ... the address of the line of the marked characters must be updated
         for coord in coords_to_process + w:bd_marks.coords
         "                              │
-        "                              └── `coords_to_process` is only a copy
-        "                                  of (a subset of) `w:bd_marks.coords`
-        "                                  we also need to update the original coordinates
+        "                              └ `coords_to_process` is only a copy
+        "                                of (a subset of) `w:bd_marks.coords`
+        "                                we also need to update the original coordinates
 
-            " … increment it with `len(coords_to_process) + 1`
+            " ... increment it with `len(coords_to_process) + 1`
             let coord.line += len(coords_to_process) + 1
         endfor
     endif
@@ -202,8 +201,9 @@ fu! breakdown#put_error_sign(type) abort "{{{2
 
     if next_line =~# error_sign
         " if our cursor is on the 20th cell, while the next lines occupy only 10
-        " cells  the next  substitutions will  fail,  because it  will target  a
-        " non-existing character
+        " cells the  next substitutions  will fail, because  they will  target a
+        " non-existing character;  need to prevent  that by appending  spaces if
+        " needed
         let next_line_length = strchars(next_line, 1)
         if vcol > next_line_length
             let next_line .= repeat(' ', vcol - next_line_length)
@@ -258,30 +258,32 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         "
         " Question: How does it work?
         "
-        " MWE:
-        "
-        "     set nosol
-        "     nno  <silent>  cd  :<c-u>set opfunc=Func<cr>g@l
-        "     fu! Func(type) abort
-        "         --,-d_
-        "         call append(line('.')-1, '    " the date is:')
-        "         call append(line('.')-1, '    " '.strftime('%c'))
-        "         " the date is:
-        "         " Wed 26 Sep 2018 12:58:35 AM CEST
-        "         " foo bar baz qux norf
-        "     endfu
-        "
-        " Source the code, move your cursor on the `foo bar ...` line,
-        " and press `cd`.
-        " Again, you can fix the issue by adding `+-` right after `:d`.
-        "
         " Answer: from `:h 'sol`
         "
-        "     ... When off the cursor is kept in the same column (if possible).
-        "     This applies to the commands: ...
-        "     Also for an Ex command that only has a line number, e.g., ":25" or ":+".
-        "     In case  of BUFFER CHANGING  COMMANDS the  cursor is placed  at the
-        "     column where it was the last time the buffer was edited.
+        " >    ... When off the cursor is kept in the same column (if possible).
+        " >    This applies to the commands: ...
+        " >    Also for an Ex command that only has a line number, e.g., ":25" or ":+".
+        " >    In case  of **buffer changing  commands** the  cursor is placed  at the
+        " >    column where it was the last time the buffer was edited.
+        "
+        " MWE:
+        "
+        "     $ vim -Nu <(cat <<'EOF'
+        "     set nosol
+        "     nno cd :call Func()<cr>
+        "     fu! Func() abort
+        "        --,-d_
+        "        call append(line('.')-1, 'the date is:')
+        "        call append(line('.')-1, strftime('%c'))
+        "     endfu
+        "     EOF
+        "     ) +"put =['the date is:', 'today', 'some text']"
+        "
+        "     " press `e` to move the cursor on the 'e' of 'some'
+        "     " press `cd`
+        "     " the cursor has jumped onto the first character of the line
+        "
+        " Again, you can fix the issue by adding `+-` right after `:d`.
         "
         " TODO:
         " Question:
@@ -292,8 +294,8 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         " Besides, if you execute the 4 commands manually (:d, +-, append() x 2),
         " the issue is not fixed anymore.
         "
-        " So why does `+-` work differently  depending on whether it's inside an
-        " operator function, or outside?
+        " So why does  `+-` work differently depending on whether  it's inside a
+        " function, or outside?
         "}}}
     else
         let here = line('.')
@@ -314,9 +316,9 @@ fu! breakdown#put_v(dir) abort "{{{2
     "
     " The pattern contains 3 branches because such a character could be:
     "
-    "       - after the mark '< and before the mark '>
-    "       - on the mark '<
-    "       - on the mark '>
+    "    - after the mark '< and before the mark '>
+    "    - on the mark '<
+    "    - on the mark '>
     "}}}
     let pat = '\%>'.col1.'v\%<'.col2.'v.\|\%'.col1.'v.\|\%'.col2.'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
@@ -550,10 +552,10 @@ fu! breakdown#put_error_sign_where(dir) abort "{{{2
 endfu
 
 fu! s:update_coords() abort "{{{2
-    " If we're on the same line as the previous marked characters…
+    " If we're on the same line as the previous marked characters...
     if !empty(w:bd_marks.coords) && line('.') ==# w:bd_marks.coords[0].line
 
-        " … and if the current position is already marked, then instead of
+        " ... and  if the current  position is  already marked, then  instead of
         " re-adding it as a mark, remove it (toggle).
         if index( w:bd_marks.coords,
             \ {'line' : line('.'), 'col' : virtcol('.')})
@@ -564,7 +566,7 @@ fu! s:update_coords() abort "{{{2
                 \ )
         else
 
-            " … otherwise, add the current position to the list of coordinates
+            " ... otherwise, add the current position to the list of coordinates
 
             let w:bd_marks.coords += [{
             \       'line' : line('.'),
