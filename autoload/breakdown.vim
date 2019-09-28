@@ -65,7 +65,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
 
     " make sure 've' allows us to draw freely
     " also, make sure 'tw' and 'wm' don't break a long line
-    let [ve_save, tw_save, wm_save] = [&ve, &l:tw, &l:wm]
+    let [ve_save, tw_save, wm_save, bufnr] = [&ve, &l:tw, &l:wm, bufnr('%')]
     setl ve=all tw=0 wm=0
 
     " initialize empty location list
@@ -169,7 +169,9 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     let w:bd_marks.coords = coords_save
 
     " restore the original values of the options we changed
-    let [&ve, &l:tw, &l:wm] = [ve_save, tw_save, wm_save]
+    let &ve = ve_save
+    call setbufvar(bufnr, '&tw', tw_save)
+    call setbufvar(bufnr, '&wm', wm_save)
 
     call breakdown#clear_match()
     sil! call lg#motion#repeatable#make#set_last_used(']l')
