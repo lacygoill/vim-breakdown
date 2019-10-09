@@ -56,7 +56,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
 
     " if we  want to draw  the diagram in which  the items contain  buckets, the
     " number of marked characters must be even, not odd
-    if a:shape is# 'bucket' && len(w:bd_marks.coords) % 2 ==# 1
+    if a:shape is# 'bucket' && len(w:bd_marks.coords) % 2 == 1
         echohl ErrorMsg
         echo '[breakdown] number of marked characters must be even'
         echohl None
@@ -82,7 +82,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     " iterate over half of the coordinates.
 
     let coords_to_process = a:shape is# 'bucket'
-                        \ ?     filter(deepcopy(w:bd_marks.coords), {i -> i%2 ==# 0})
+                        \ ?     filter(deepcopy(w:bd_marks.coords), {i -> i%2 == 0})
                         \ :     deepcopy(w:bd_marks.coords)
     "                           │
     "                           └ why `deepcopy()`?{{{
@@ -118,7 +118,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     call append(line('.') + dir, repeat([''], hm_to_draw + 1))
 
     " if we've just opened new lines above (instead of below) ...
-    if dir ==# -1
+    if dir == -1
         " ... the address of the line of the marked characters must be updated
         for coord in coords_to_process + w:bd_marks.coords
         "                              │
@@ -134,7 +134,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     " if there's a  commentstring, comment the diagram lines  (left side) except
     " in  a markdown  buffer, because  a diagram  won't cause  errors there,  so
     " there's no need to
-    if !empty(&l:cms) && index(['markdown', 'text'], &ft) ==# -1
+    if !empty(&l:cms) && index(['markdown', 'text'], &ft) == -1
         let [cms_left, cms_right] = split(&l:cms, '%s', 1)
         call s:comment(cms_left, 'left', dir, hm_to_draw)
     endif
@@ -208,7 +208,7 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         " needed
         let next_line_length = strchars(next_line, 1)
         if vcol > next_line_length
-            let next_line .= repeat(' ', vcol - next_line_length)
+            let next_line ..= repeat(' ', vcol - next_line_length)
         endif
 
         let pat = '\%'.vcol.'v'.repeat('.', strchars(error_sign, 1))
@@ -375,7 +375,7 @@ fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
     " get the width of the `───` segment to draw above the item to describe
     let w = w:bd_marks.coords[i+1].col - coord.col - 1
 
-    if dir ==# -1
+    if dir == -1
         " draw `├───┐`
         exe 'norm! kR├'.repeat('─', w).'┐'
         exe 'norm! '.(w+1).'h'
@@ -402,7 +402,7 @@ endfu
 fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
     let [dir, hm_to_draw]  = [a:dir, a:hm_to_draw]
 
-    if dir ==# -1
+    if dir == -1
         " draw the `│` column
         for i in range(1, hm_to_draw + 1)
             norm! kr│
@@ -439,7 +439,7 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
     " iterate over the lines of the diagram
     for i in range(0, a:hm_to_draw)
         " move the cursor in the right direction
-        exe (a:dir ==# -1 ? '-' : '+')
+        exe (a:dir == -1 ? '-' : '+')
 
         let rep = a:where is# 'left'
               \ ?     indent . a:what
@@ -527,7 +527,7 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
 
         call add(w:bd_marks.loclist, {
         \            'bufnr' : bufnr('%'),
-        \            'lnum'  : coord.line + (dir ==# -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
+        \            'lnum'  : coord.line + (dir == -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
         \            'col'   : col,
         \ })
 endfu
@@ -545,7 +545,7 @@ fu! s:mark_init() abort "{{{2
         " we don't want to add a new match besides the old one
         call matchdelete(w:bd_marks.id)
         " and add a bar at the end of the pattern, to prepare for the new branch
-        let w:bd_marks.pat .= '|'
+        let w:bd_marks.pat ..= '|'
     endif
 endfu
 
@@ -555,7 +555,7 @@ endfu
 
 fu! s:update_coords() abort "{{{2
     " If we're on the same line as the previous marked characters...
-    if !empty(w:bd_marks.coords) && line('.') ==# w:bd_marks.coords[0].line
+    if !empty(w:bd_marks.coords) && line('.') == w:bd_marks.coords[0].line
 
         " ... and  if the current  position is  already marked, then  instead of
         " re-adding it as a mark, remove it (toggle).
