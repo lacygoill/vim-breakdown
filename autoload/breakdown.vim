@@ -1,5 +1,5 @@
 " Interface {{{1
-fu! breakdown#mark() abort "{{{2
+fu breakdown#mark() abort "{{{2
     " `w:bd_marks` may need to be initialized.
     " And if a match is already present, it needs to be removed.
     call s:mark_init()
@@ -43,7 +43,7 @@ fu! breakdown#mark() abort "{{{2
                     \ :     0
 endfu
 
-fu! breakdown#expand(shape, dir) abort "{{{2
+fu breakdown#expand(shape, dir) abort "{{{2
     " don't try to draw anything if we don't have any coordinates
     if !exists('w:bd_marks.coords')
         return
@@ -177,7 +177,7 @@ fu! breakdown#expand(shape, dir) abort "{{{2
     sil! call lg#motion#repeatable#make#set_last_used(']l')
 endfu
 
-fu! breakdown#clear_match() abort "{{{2
+fu breakdown#clear_match() abort "{{{2
     if exists('w:bd_marks.id')
         call matchdelete(w:bd_marks.id)
         " Why not removing `w:bd_marks` entirely?{{{
@@ -192,7 +192,7 @@ fu! breakdown#clear_match() abort "{{{2
     endif
 endfu
 
-fu! breakdown#put_error_sign(type) abort "{{{2
+fu breakdown#put_error_sign(type) abort "{{{2
     let error_sign = '✘'
     let pointer = s:put_error_sign_location is# 'above'
         \ ? 'v'
@@ -273,7 +273,7 @@ fu! breakdown#put_error_sign(type) abort "{{{2
         "     $ vim -Nu <(cat <<'EOF'
         "     set nosol
         "     nno cd :call Func()<cr>
-        "     fu! Func() abort
+        "     fu Func() abort
         "        --,-d_
         "        call append(line('.')-1, 'the date is:')
         "        call append(line('.')-1, strftime('%c'))
@@ -307,7 +307,7 @@ fu! breakdown#put_error_sign(type) abort "{{{2
     endif
 endfu
 
-fu! breakdown#put_v(dir) abort "{{{2
+fu breakdown#put_v(dir) abort "{{{2
     if line("'<") != line("'>")
         return
     endif
@@ -353,7 +353,7 @@ fu! breakdown#put_v(dir) abort "{{{2
 endfu
 " }}}1
 " Core {{{1
-fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
+fu s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
 
     " reposition cursor before drawing the next branch
@@ -366,7 +366,7 @@ fu! s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     endif
 endfu
 
-fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
+fu s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
     let [dir, hm_to_draw, coord]  = [a:dir, a:hm_to_draw, a:coord]
 
     " get the index of the current marked character inside the list of
@@ -399,7 +399,7 @@ fu! s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
     endif
 endfu
 
-fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
+fu s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
     let [dir, hm_to_draw]  = [a:dir, a:hm_to_draw]
 
     if dir == -1
@@ -417,7 +417,7 @@ fu! s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
     endif
 endfu
 
-fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
+fu s:comment(what, where, dir, hm_to_draw) abort "{{{2
     " Purpose:{{{
     " This function is called once or twice per line of the diagram.
     " Twice if we're in a buffer whose commentstring has 2 parts.
@@ -449,7 +449,7 @@ fu! s:comment(what, where, dir, hm_to_draw) abort "{{{2
     endfor
 endfu
 
-fu! s:merge_lines(line, existing_line) abort "{{{2
+fu s:merge_lines(line, existing_line) abort "{{{2
     let [longest, shortest] = strchars(a:line, 1) > strchars(a:existing_line, 1)
         \ ? [a:line, a:existing_line]
         \ : [a:existing_line, a:line]
@@ -466,7 +466,7 @@ fu! s:merge_lines(line, existing_line) abort "{{{2
     return join(longest, '')
 endfu
 
-fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
+fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     let [is_bucket, coord, dir, hm_to_draw] = [a:is_bucket, a:coord, a:dir, a:hm_to_draw]
 
     " Example of bucket diagram:{{{
@@ -533,7 +533,7 @@ fu! s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
 endfu
 " }}}1
 " Misc. {{{1
-fu! s:mark_init() abort "{{{2
+fu s:mark_init() abort "{{{2
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
         \       'coords' : [],
@@ -549,11 +549,11 @@ fu! s:mark_init() abort "{{{2
     endif
 endfu
 
-fu! breakdown#put_error_sign_where(dir) abort "{{{2
+fu breakdown#put_error_sign_where(dir) abort "{{{2
     let s:put_error_sign_location = a:dir
 endfu
 
-fu! s:update_coords() abort "{{{2
+fu s:update_coords() abort "{{{2
     " If we're on the same line as the previous marked characters...
     if !empty(w:bd_marks.coords) && line('.') == w:bd_marks.coords[0].line
 
