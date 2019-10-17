@@ -3,25 +3,25 @@ if exists('g:loaded_breakdown')
 endif
 let g:loaded_breakdown = 1
 
-nno  <silent><unique>  m<cr>   :<c-u>call breakdown#mark()<cr>
-nno  <silent><unique>  m<c-h>  :<c-u>call breakdown#clear_match()<cr>
+nno <silent><unique> m<cr>  :<c-u>call breakdown#mark()<cr>
+nno <silent><unique> m<c-h> :<c-u>call breakdown#clear_match()<cr>
 
-nno  <silent><unique>  m)      :<c-u>call breakdown#expand('simple', 'above')<cr>
-nno  <silent><unique>  m}      :<c-u>call breakdown#expand('simple', 'below')<cr>
+nno <silent><unique> m)     :<c-u>call breakdown#expand('simple', 'above')<cr>
+nno <silent><unique> m}     :<c-u>call breakdown#expand('simple', 'below')<cr>
 
-nno  <silent><unique>  m(      :<c-u>call breakdown#expand('bucket', 'above')<cr>
-nno  <silent><unique>  m{      :<c-u>call breakdown#expand('bucket', 'below')<cr>
+nno <silent><unique> m(     :<c-u>call breakdown#expand('bucket', 'above')<cr>
+nno <silent><unique> m{     :<c-u>call breakdown#expand('bucket', 'below')<cr>
 
 " Why not `+^`?{{{
 "
 " I often press `g^` by accident, which atm makes us focus the first tabpage.
 " Too distracting.
 "}}}
-nno <silent><unique>  +v  :<c-u>call breakdown#put_error_sign_where('below')<bar>set opfunc=breakdown#put_error_sign<cr>g@l
-nno <silent><unique>  +V  :<c-u>call breakdown#put_error_sign_where('above')<bar>set opfunc=breakdown#put_error_sign<cr>g@l
+nno <silent><unique> +v :<c-u>call breakdown#put_error_sign_where('below')<bar>set opfunc=breakdown#put_error_sign<bar>norm! g@l<cr>
+nno <silent><unique> +V :<c-u>call breakdown#put_error_sign_where('above')<bar>set opfunc=breakdown#put_error_sign<bar>norm! g@l<cr>
 
-xno <silent><unique>  +v  :call breakdown#put_v('below')<cr>
-xno <silent><unique>  +V  :call breakdown#put_v('above')<cr>
+xno <silent><unique> +v :call breakdown#put_v('below')<cr>
+xno <silent><unique> +V :call breakdown#put_v('above')<cr>
 
 " TODO: If possible, use `append()` or `setline()` instead of `:norm` to draw a diagram.  It's faster.
 
@@ -84,12 +84,12 @@ xno <silent><unique>  +V  :call breakdown#put_v('above')<cr>
 "
 " Example of reverse simple diagram:
 "
-"                                     search('=\%#>', 'bn', line('.'))
-"                                            │        │     │
-"   match any `=[>]`, where `[]` denotes the ┘        │     │
-"   cursor's position                                 │     │
-"                                                     │     │
-"             backwards without moving the cursor and ┘     │
-"                                                           │
-"                           search in the current line only ┘
+"                                         search('=\%#>', 'bn', line('.'))
+"                                                │        │     │
+"       match any `=[>]`, where `[]` denotes the ┘        │     │
+"       cursor's position                                 │     │
+"                                                         │     │
+"                 backwards without moving the cursor and ┘     │
+"                                                               │
+"                               search in the current line only ┘
 
