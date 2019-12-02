@@ -290,7 +290,7 @@ fu breakdown#put_error_sign(type) abort "{{{2
         " TODO:
         " Question:
         " Ok, `+-` doesn't make the column of the cursor change.
-        " But it doesn't matter, the column of the cursor has ALREADY changed
+        " But it doesn't matter, the column  of the cursor has *already* changed
         " when `:d` is executed!
         "
         " Besides, if you execute the 4 commands manually (:d, +-, append() x 2),
