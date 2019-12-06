@@ -66,7 +66,45 @@ fu breakdown#expand(shape, dir) abort "{{{2
     "    - `'fdm'` doesn't make the edition slow in the middle of a big folded file
     "}}}
     let [ve_save, tw_save, wm_save, fdm_save, bufnr] = [&ve, &l:tw, &l:wm, &l:fdm, bufnr('%')]
-    setl ve=all tw=0 wm=0 fdm=manual
+    " Why `:noa`?{{{
+    "
+    " To be  sure that  when we  expand a  diagram, the  flag `[ve=all]`  is not
+    " briefly displayed in the tab line.
+    "
+    " Remember that we have this autocmd in `vim-statusline`:
+    "
+    "     au OptionSet virtualedit redrawt
+    "
+    " Without to this `:noa`, sometimes, when  expanding a diagram in the middle
+    " of a  big folded file,  `[ve=all]` is briefly  displayed in the  tab line,
+    " which is distracting.
+    "
+    " ---
+    "
+    " We have another `:noa` in this script:
+    "
+    "     noa call s:draw(...)
+    "
+    " It also fixes the issue.
+    "
+    " ---
+    "
+    " If we moved the `[ve=all]` flag in the buffer scope, the issue would never
+    " be triggered.
+    "
+    " ---
+    "
+    " The issue seems to be related to this UltiSnips autocmd:
+    "
+    "     augroup UltiSnips_AutoTrigger
+    "         au!
+    "         au InsertCharPre,TextChangedI,TextChangedP * call UltiSnips#TrackChange()
+    "     augroup END
+    "
+    " Because it's not triggered when we remove the latter.
+    "}}}
+    noa set ve=all
+    setl tw=0 wm=0 fdm=manual
 
     " we sort the coordinates according  to their column number, because there's
     " no guarantee that we marked the characters in order from left to right
@@ -138,7 +176,13 @@ fu breakdown#expand(shape, dir) abort "{{{2
 
     for coord in coords_to_process
         " draw a branch of the diagram
-        call s:draw(a:shape is# 'bucket', dir, coord, hm_to_draw)
+        " Why the `:noa`?{{{
+        "
+        " To increase the performance.
+        " No need to  trigger any event every time we  replace some character of
+        " the diagram with a `:norm!` command.
+        "}}}
+        noa call s:draw(a:shape is# 'bucket', dir, coord, hm_to_draw)
 
         " populate the location list
         call s:populate_loclist(a:shape is# 'bucket', coord, dir, hm_to_draw)
