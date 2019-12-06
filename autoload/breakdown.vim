@@ -65,7 +65,13 @@ fu breakdown#expand(shape, dir) abort "{{{2
     "    - `'tw'` and `'wm'` don't break a long line
     "    - `'fdm'` doesn't make the edition slow in the middle of a big folded file
     "}}}
-    let [ve_save, tw_save, wm_save, fdm_save, bufnr] = [&ve, &l:tw, &l:wm, &l:fdm, bufnr('%')]
+    let opts_save = {
+        \ 've': &ve,
+        \ 'tw': &l:tw,
+        \ 'wm': &l:wm,
+        \ 'fdm': &l:fdm,
+        \ 'bufnr': bufnr('%'),
+        \ }
     " Why `:noa`?{{{
     "
     " To be  sure that  when we  expand a  diagram, the  flag `[ve=all]`  is not
@@ -84,13 +90,9 @@ fu breakdown#expand(shape, dir) abort "{{{2
     " We have another `:noa` in this script:
     "
     "     noa call s:draw(...)
+    "     ^^^
     "
     " It also fixes the issue.
-    "
-    " ---
-    "
-    " If we moved the `[ve=all]` flag in the buffer scope, the issue would never
-    " be triggered.
     "
     " ---
     "
@@ -144,7 +146,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
     let hm_to_draw = len(coords_to_process)
 
     " make sure the cursor is on the line containing marked characters
-    call cursor(w:bd_marks.coords[0].line, '.')
+    exe 'norm! '..w:bd_marks.coords[0].line..'G'
 
     " open enough new lines to draw diagram
     call append(line('.') + dir, repeat([''], hm_to_draw + 1))
@@ -197,11 +199,11 @@ fu breakdown#expand(shape, dir) abort "{{{2
     " if there's a commentstring which has a non empty right part,
     " comment the right side of the diagram lines
     if exists('cms_right') && !empty(cms_right)
-        call s:comment(cms_right, 'right', dir, len(coords_to_process))
-        "                                       │
-        "                                       └ can't use `hm_to_draw` again
-        "                                         because the variable has been decremented
-        "                                         in the previous for loop
+        noa call s:comment(cms_right, 'right', dir, len(coords_to_process))
+        "                                           │
+        "                                           └ can't use `hm_to_draw` again
+        "                                             because the variable has been decremented
+        "                                             in the previous for loop
     endif
 
     " restore the  coordinates in  case we  changed the  addresses of  the lines
@@ -210,10 +212,10 @@ fu breakdown#expand(shape, dir) abort "{{{2
     let w:bd_marks.coords = coords_save
 
     " restore the original values of the options we changed
-    let &ve = ve_save
-    call setbufvar(bufnr, '&tw', tw_save)
-    call setbufvar(bufnr, '&wm', wm_save)
-    call setbufvar(bufnr, '&fdm', fdm_save)
+    let &ve = opts_save.ve
+    call setbufvar(opts_save.bufnr, '&tw', opts_save.tw)
+    call setbufvar(opts_save.bufnr, '&wm', opts_save.wm)
+    call setbufvar(opts_save.bufnr, '&fdm', opts_save.fdm)
 
     call breakdown#clear_match()
     sil! call lg#motion#repeatable#make#set_last_used(']l')
@@ -273,80 +275,79 @@ fu breakdown#put_error_sign(type) abort "{{{2
         let here = line('.')-1
         call append(here, new_line)
         call append(here+1, substitute(new_line, error_sign, pointer, 'g'))
-        " Why this motion?{{{
-        "
-        " Without, `.` will move the cursor at the beginning of the line,
-        " probably because of the previous `:delete` command.
-        "}}}
-        call cursor('.', vcol)
-        " Alternatively:{{{
-        "
-        " You could also have executed one of these right after the deletion:
-        "
-        "     --,-d_
-        "     +-
-        "
-        "     --,-d_
-        "     -+
-        "
-        "     --,-d_
-        "     -
-        "     +
-        "
-        "     --,-d_
-        "     +
-        "     -
-        "
-        " It would have prevented the cursor from jumping to the beginning of
-        " the line when pressing `.`.
-        "
-        " Question: How does it work?
-        "
-        " Answer: from `:h 'sol`
-        "
-        " >    ... When off the cursor is kept in the same column (if possible).
-        " >    This applies to the commands: ...
-        " >    Also for an Ex command that only has a line number, e.g., ":25" or ":+".
-        " >    In case  of **buffer changing  commands** the  cursor is placed  at the
-        " >    column where it was the last time the buffer was edited.
-        "
-        " MWE:
-        "
-        "     $ vim -Nu <(cat <<'EOF'
-        "     set nosol
-        "     nno cd :call Func()<cr>
-        "     fu Func() abort
-        "        --,-d_
-        "        call append(line('.')-1, 'the date is:')
-        "        call append(line('.')-1, strftime('%c'))
-        "     endfu
-        "     EOF
-        "     ) +"put =['the date is:', 'today', 'some text']"
-        "
-        "     " press `e` to move the cursor on the 'e' of 'some'
-        "     " press `cd`
-        "     " the cursor has jumped onto the first character of the line
-        "
-        " Again, you can fix the issue by adding `+-` right after `:d`.
-        "
-        " TODO:
-        " Question:
-        " Ok, `+-` doesn't make the column of the cursor change.
-        " But it doesn't matter, the column  of the cursor has *already* changed
-        " when `:d` is executed!
-        "
-        " Besides, if you execute the 4 commands manually (:d, +-, append() x 2),
-        " the issue is not fixed anymore.
-        "
-        " So why does  `+-` work differently depending on whether  it's inside a
-        " function, or outside?
-        "}}}
     else
         let here = line('.')
         call append(here, substitute(new_line, error_sign, pointer, 'g'))
         call append(here+1, new_line)
-        call cursor('.', vcol)
     endif
+    " Why this motion?{{{
+    "
+    " Without, `.` will  move the cursor at the beginning  of the line, probably
+    " because of the previous `:delete` command.
+    "}}}
+    exe 'norm! '..vcol..'|'
+    " Alternatively:{{{
+    "
+    " You could also have executed one of these right after the deletion:
+    "
+    "     --,-d_
+    "     +-
+    "
+    "     --,-d_
+    "     -+
+    "
+    "     --,-d_
+    "     -
+    "     +
+    "
+    "     --,-d_
+    "     +
+    "     -
+    "
+    " It would have prevented the cursor from jumping to the beginning of
+    " the line when pressing `.`.
+    "
+    " Question: How does it work?
+    "
+    " Answer: from `:h 'sol`
+    "
+    " >    ... When off the cursor is kept in the same column (if possible).
+    " >    This applies to the commands: ...
+    " >    Also for an Ex command that only has a line number, e.g., ":25" or ":+".
+    " >    In case  of **buffer changing  commands** the  cursor is placed  at the
+    " >    column where it was the last time the buffer was edited.
+    "
+    " MWE:
+    "
+    "     $ vim -Nu <(cat <<'EOF'
+    "     set nosol
+    "     nno cd :call Func()<cr>
+    "     fu Func() abort
+    "        --,-d_
+    "        call append(line('.')-1, 'the date is:')
+    "        call append(line('.')-1, strftime('%c'))
+    "     endfu
+    "     EOF
+    "     ) +"put =['the date is:', 'today', 'some text']"
+    "
+    "     " press `e` to move the cursor on the 'e' of 'some'
+    "     " press `cd`
+    "     " the cursor has jumped onto the first character of the line
+    "
+    " Again, you can fix the issue by adding `+-` right after `:d`.
+    "
+    " TODO:
+    " Question:
+    " Ok, `+-` doesn't make the column of the cursor change.
+    " But it doesn't matter, the column  of the cursor has *already* changed
+    " when `:d` is executed!
+    "
+    " Besides, if you execute the 4 commands manually (:d, +-, append() x 2),
+    " the issue is not fixed anymore.
+    "
+    " So why does  `+-` work differently depending on whether  it's inside a
+    " function, or outside?
+    "}}}
 endfu
 
 fu breakdown#put_v(dir) abort "{{{2
@@ -399,7 +400,7 @@ fu s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
 
     " reposition cursor before drawing the next branch
-    call cursor(a:coord.line, a:coord.col)
+    exe 'norm! '..a:coord.line..'G'..a:coord.col..'|'
 
     if a:is_bucket
         call s:draw_bucket(a:dir, a:hm_to_draw, a:coord)
@@ -474,7 +475,7 @@ fu s:comment(what, where, dir, hm_to_draw) abort "{{{2
 
     " Before beginning commenting the lines of the diagram, make sure the cursor
     " is on the line we're describing.
-    call cursor(w:bd_marks.coords[0].line, '.')
+    exe 'norm! '..w:bd_marks.coords[0].line..'G'
 
     let indent = repeat(' ', indent('.'))
 
