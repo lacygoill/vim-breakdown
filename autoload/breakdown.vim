@@ -410,7 +410,6 @@ fu s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
         " draw the `│` column
         for i in range(1, hm_to_draw + 1)
             norm! jr│
-            call setline(line('.')+i, line)
         endfor
         exe 'norm! R└ '
     endif
