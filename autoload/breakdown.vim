@@ -6,8 +6,8 @@ fu breakdown#mark() abort "{{{2
     call s:update_coords()
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
-    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), {_,v -> '%'. v.line .'l%'. v.col .'v.'})
-    let w:bd_marks.pat = '\v'.join(w:bd_marks.pat, '|')
+    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), {_,v -> '%'..v.line..'l%'..v.col..'v.'})
+    let w:bd_marks.pat = '\v'..join(w:bd_marks.pat, '|')
     " When do we need to use `deepcopy()` instead of `copy()` ?{{{
     "
     " Every time we need to make a copy of the coordinates, we have to use
@@ -39,23 +39,19 @@ fu breakdown#mark() abort "{{{2
 
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
-                    \ ?     matchadd('SpellBad', w:bd_marks.pat)
-                    \ :     0
+        \ ? matchadd('SpellBad', w:bd_marks.pat)
+        \ : 0
 endfu
 
 fu breakdown#expand(shape, dir) abort "{{{2
     " don't try to draw anything if we don't have any coordinates
-    if !exists('w:bd_marks.coords')
-        return
-    endif
+    if !exists('w:bd_marks.coords') | return | endif
 
     let [dir, shape] = [a:dir is# 'above' ? -1 : 0, a:shape]
     " we save the coordinates, because we may update them during the expansion
     " it happens when the diagram must be drawn above (not below)
     let coords_save = deepcopy(w:bd_marks.coords)
 
-    " if we  want to draw  the diagram in which  the items contain  buckets, the
-    " number of marked characters must be even, not odd
     if a:shape is# 'bucket' && len(w:bd_marks.coords) % 2 == 1
         echohl ErrorMsg
         echo '[breakdown] number of marked characters must be even'
@@ -63,29 +59,27 @@ fu breakdown#expand(shape, dir) abort "{{{2
         return
     endif
 
-    " make sure 've' allows us to draw freely
-    " also, make sure 'tw' and 'wm' don't break a long line
-    let [ve_save, tw_save, wm_save, bufnr] = [&ve, &l:tw, &l:wm, bufnr('%')]
-    setl ve=all tw=0 wm=0
+    " make sure that:{{{
+    "
+    "    - `'ve'` allows us to draw freely
+    "    - `'tw'` and `'wm'` don't break a long line
+    "    - `'fdm'` doesn't make the edition slow in the middle of a big folded file
+    "}}}
+    let [ve_save, tw_save, wm_save, fdm_save, bufnr] = [&ve, &l:tw, &l:wm, &l:fdm, bufnr('%')]
+    setl ve=all tw=0 wm=0 fdm=manual
 
-    " initialize empty location list
-    let w:bd_marks.loclist = []
-
-    " we sort the coordinates according to their column number, because
-    " there's no guarantee that we marked the characters in order from left to
-    " right
+    " we sort the coordinates according  to their column number, because there's
+    " no guarantee that we marked the characters in order from left to right
     call sort(w:bd_marks.coords, {x,y -> x.col - y.col})
 
     " In a  diagram containing  buckets, every  2 consecutive  marked characters
     " stand for one branch of the latter.
-    " Therefore, the `for` loop which will progressively draw the diagram must
+    " Therefore, the `for`  loop which will progressively draw  the diagram must
     " iterate over half of the coordinates.
-
     let coords_to_process = a:shape is# 'bucket'
-                        \ ?     filter(deepcopy(w:bd_marks.coords), {i -> i%2 == 0})
-                        \ :     deepcopy(w:bd_marks.coords)
-    "                           │
-    "                           └ why `deepcopy()`?{{{
+        \ ? filter(deepcopy(w:bd_marks.coords), {i -> i%2 == 0})
+        \ : deepcopy(w:bd_marks.coords)
+    " Why `deepcopy()`?{{{
     "
     " Because   we   may   update    the   line   coordinates,   later,   inside
     " `coords_to_process` (necessary if the diagram is drawn above).
@@ -112,7 +106,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
     let hm_to_draw = len(coords_to_process)
 
     " make sure the cursor is on the line containing marked characters
-    exe 'norm! '.w:bd_marks.coords[0].line.'G'
+    call cursor(w:bd_marks.coords[0].line, '.')
 
     " open enough new lines to draw diagram
     call append(line('.') + dir, repeat([''], hm_to_draw + 1))
@@ -138,6 +132,9 @@ fu breakdown#expand(shape, dir) abort "{{{2
         let [cms_left, cms_right] = split(&l:cms, '%s', 1)
         call s:comment(cms_left, 'left', dir, hm_to_draw)
     endif
+
+    " initialize empty location list
+    let w:bd_marks.loclist = []
 
     for coord in coords_to_process
         " draw a branch of the diagram
@@ -172,6 +169,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
     let &ve = ve_save
     call setbufvar(bufnr, '&tw', tw_save)
     call setbufvar(bufnr, '&wm', wm_save)
+    call setbufvar(bufnr, '&fdm', fdm_save)
 
     call breakdown#clear_match()
     sil! call lg#motion#repeatable#make#set_last_used(']l')
@@ -211,7 +209,7 @@ fu breakdown#put_error_sign(type) abort "{{{2
             let next_line ..= repeat(' ', vcol - next_line_length)
         endif
 
-        let pat = '\%'.vcol.'v'.repeat('.', strchars(error_sign, 1))
+        let pat = '\%'..vcol..'v'..repeat('.', strchars(error_sign, 1))
         let new_line = substitute(next_line, pat, error_sign, '')
 
         if s:put_error_sign_location is# 'above'
@@ -224,7 +222,7 @@ fu breakdown#put_error_sign(type) abort "{{{2
         let indent = indent('.')
         let spaces_between_cml_and_mark = repeat(' ', virtcol('.')-1-strchars(cml, 1)-indent)
         let indent = repeat(' ', indent)
-        let new_line = indent . cml . spaces_between_cml_and_mark . error_sign
+        let new_line = indent..cml..spaces_between_cml_and_mark..error_sign
     endif
 
     if s:put_error_sign_location is# 'above'
@@ -236,7 +234,7 @@ fu breakdown#put_error_sign(type) abort "{{{2
         " Without, `.` will move the cursor at the beginning of the line,
         " probably because of the previous `:delete` command.
         "}}}
-        exe 'norm! '.vcol.'|'
+        call cursor('.', vcol)
         " Alternatively:{{{
         "
         " You could also have executed one of these right after the deletion:
@@ -303,7 +301,7 @@ fu breakdown#put_error_sign(type) abort "{{{2
         let here = line('.')
         call append(here, substitute(new_line, error_sign, pointer, 'g'))
         call append(here+1, new_line)
-        exe 'norm! '.vcol.'|'
+        call cursor('.', vcol)
     endif
 endfu
 
@@ -322,7 +320,7 @@ fu breakdown#put_v(dir) abort "{{{2
     "    - on the mark '<
     "    - on the mark '>
     "}}}
-    let pat = '\%>'.col1.'v\%<'.col2.'v.\|\%'.col1.'v.\|\%'.col2.'v.'
+    let pat = '\%>'..col1..'v\%<'..col2..'v.\|\%'..col1..'v.\|\%'..col2..'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
     let line = substitute(line, '\s*$', '', '')
     if &ft is# 'markdown'
@@ -335,15 +333,15 @@ fu breakdown#put_v(dir) abort "{{{2
         let [cml_start, cml_end] = split(&l:cms, '%s', 1)
         let indent = indent('.')
         let line = repeat(' ', indent)
-            \ . cml_start
-            \ . line[strchars(cml_start,  1) + indent :]
-            \ . (!empty(cml_end) ? ' ' : '').cml_end
+            \ ..cml_start
+            \ ..line[strchars(cml_start,  1) + indent :]
+            \ ..(!empty(cml_end) ? ' ' : '')..cml_end
         " if  there are  already  marks on  the line  below/above,  don't add  a
         " new  line  with `append()`,  instead  replace  the current  line  with
         " `setline()`, merging its existing marks with the new ones
         let offset = (a:dir is# 'below' ? 1 : -1)
         let existing_line = getline(line('.') + offset)
-        if existing_line =~# '^\s*\V'.escape(cml_start, '\').'\m[ v^]*$'
+        if existing_line =~# '^\s*\V'..escape(cml_start, '\')..'\m[ v^]*$'
             let line = s:merge_lines(line, existing_line)
             call setline(line('.') + offset, line)
             return
@@ -357,7 +355,7 @@ fu s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
 
     " reposition cursor before drawing the next branch
-    exe 'norm! '. a:coord.line .'G'. a:coord.col . '|'
+    call cursor(a:coord.line, a:coord.col)
 
     if a:is_bucket
         call s:draw_bucket(a:dir, a:hm_to_draw, a:coord)
@@ -377,8 +375,8 @@ fu s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
 
     if dir == -1
         " draw `├───┐`
-        exe 'norm! kR├'.repeat('─', w).'┐'
-        exe 'norm! '.(w+1).'h'
+        exe 'norm! kR├'..repeat('─', w)..'┐'
+        exe 'norm! '..(w+1)..'h'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
             norm! kr│
@@ -388,8 +386,8 @@ fu s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
 
     else
         " draw `├───┘`
-        exe 'norm! jR├'.repeat('─', w).'┘'
-        exe 'norm! '.(w+1).'h'
+        exe 'norm! jR├'..repeat('─', w)..'┘'
+        exe 'norm! '..(w+1)..'h'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
             norm! jr│
@@ -411,7 +409,8 @@ fu s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
     else
         " draw the `│` column
         for i in range(1, hm_to_draw + 1)
-            exe 'norm! jr│'
+            norm! jr│
+            call setline(line('.')+i, line)
         endfor
         exe 'norm! R└ '
     endif
@@ -432,7 +431,7 @@ fu s:comment(what, where, dir, hm_to_draw) abort "{{{2
 
     " Before beginning commenting the lines of the diagram, make sure the cursor
     " is on the line we're describing.
-    exe 'norm! '. w:bd_marks.coords[0].line .'G'
+    call cursor(w:bd_marks.coords[0].line, '.')
 
     let indent = repeat(' ', indent('.'))
 
@@ -442,8 +441,8 @@ fu s:comment(what, where, dir, hm_to_draw) abort "{{{2
         exe (a:dir == -1 ? '-' : '+')
 
         let rep = a:where is# 'left'
-              \ ?     indent . a:what
-              \ :     substitute(getline('.'), '$', ' '.a:what, '')
+              \ ?     indent..a:what
+              \ :     substitute(getline('.'), '$', ' '..a:what, '')
 
         call setline('.', rep)
     endfor
