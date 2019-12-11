@@ -537,8 +537,7 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     " And spaces  aren't multi-byte. So, the  byte index  of the beginning  of a
     " line in the diagram matches the  visual column of the corresponding marked
     " character.
-    "
-"}}}
+    "}}}
         if is_bucket
             " We are going to store the byte index of the character where we
             " want the cursor to be positioned.
