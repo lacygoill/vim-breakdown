@@ -6,8 +6,8 @@ fu breakdown#mark() abort "{{{2
     call s:update_coords()
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
-    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), {_,v -> '%'..v.line..'l%'..v.col..'v.'})
-    let w:bd_marks.pat = '\v'..join(w:bd_marks.pat, '|')
+    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), {_,v -> '\%'..v.line..'l\%'..v.col..'v.'})
+    let w:bd_marks.pat = join(w:bd_marks.pat, '\|')
     " When do we need to use `deepcopy()` instead of `copy()` ?{{{
     "
     " Every time we need to make a copy of the coordinates, we have to use
@@ -72,40 +72,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
         \ 'fdm': &l:fdm,
         \ 'bufnr': bufnr('%'),
         \ }
-    " Why `:noa`?{{{
-    "
-    " To be  sure that  when we  expand a  diagram, the  flag `[ve=all]`  is not
-    " briefly displayed in the tab line.
-    "
-    " Remember that we have this autocmd in `vim-statusline`:
-    "
-    "     au OptionSet virtualedit redrawt
-    "
-    " Without to this `:noa`, sometimes, when  expanding a diagram in the middle
-    " of a  big folded file,  `[ve=all]` is briefly  displayed in the  tab line,
-    " which is distracting.
-    "
-    " ---
-    "
-    " We have another `:noa` in this script:
-    "
-    "     noa call s:draw(...)
-    "     ^^^
-    "
-    " It also fixes the issue.
-    "
-    " ---
-    "
-    " The issue seems to be related to this UltiSnips autocmd:
-    "
-    "     augroup UltiSnips_AutoTrigger
-    "         au!
-    "         au InsertCharPre,TextChangedI,TextChangedP * call UltiSnips#TrackChange()
-    "     augroup END
-    "
-    " Because it's not triggered when we remove the latter.
-    "}}}
-    noa set ve=all
+    set ve=all
     setl tw=0 wm=0 fdm=manual
 
     " we sort the coordinates according  to their column number, because there's
@@ -178,7 +145,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
 
     for coord in coords_to_process
         " draw a branch of the diagram
-        " Why the `:noa`?{{{
+        " Why `:noa`?{{{
         "
         " To increase the performance.
         " No need to  trigger any event every time we  replace some character of
@@ -578,16 +545,16 @@ endfu
 fu s:mark_init() abort "{{{2
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
-        \       'coords' : [],
-        \       'pat'    : '',
-        \       'id'     :  0,
-        \ }
+            \ 'coords' : [],
+            \ 'pat'    : '',
+            \ 'id'     :  0,
+            \ }
     elseif w:bd_marks.id
         " if there's a match, delete it because we're going to update it:
         " we don't want to add a new match besides the old one
         call matchdelete(w:bd_marks.id)
         " and add a bar at the end of the pattern, to prepare for the new branch
-        let w:bd_marks.pat ..= '|'
+        let w:bd_marks.pat ..= '\|'
     endif
 endfu
 
