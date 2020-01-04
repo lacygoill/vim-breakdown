@@ -160,8 +160,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
     endfor
 
     " set location list
-    call setloclist(0, w:bd_marks.loclist)
-    call setloclist(0, [], 'a', {'title': 'Breakdown'})
+    call setloclist(0, [], ' ', {'items': w:bd_marks.loclist, 'title': 'Breakdown'})
 
     " if there's a commentstring which has a non empty right part,
     " comment the right side of the diagram lines
@@ -185,7 +184,6 @@ fu breakdown#expand(shape, dir) abort "{{{2
     call setbufvar(opts_save.bufnr, '&fdm', opts_save.fdm)
 
     call breakdown#clear_match()
-    sil! call lg#motion#repeatable#make#set_last_used(']l')
 endfu
 
 fu breakdown#clear_match() abort "{{{2
