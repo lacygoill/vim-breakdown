@@ -145,13 +145,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
 
     for coord in coords_to_process
         " draw a branch of the diagram
-        " Why `:noa`?{{{
-        "
-        " To increase the performance.
-        " No need to  trigger any event every time we  replace some character of
-        " the diagram with a `:norm!` command.
-        "}}}
-        noa call s:draw(a:shape is# 'bucket', dir, coord, hm_to_draw)
+        call s:draw(a:shape is# 'bucket', dir, coord, hm_to_draw)
 
         " populate the location list
         call s:populate_loclist(a:shape is# 'bucket', coord, dir, hm_to_draw)
@@ -165,11 +159,11 @@ fu breakdown#expand(shape, dir) abort "{{{2
     " if there's a commentstring which has a non empty right part,
     " comment the right side of the diagram lines
     if exists('cms_right') && !empty(cms_right)
-        noa call s:comment(cms_right, 'right', dir, len(coords_to_process))
-        "                                           │
-        "                                           └ can't use `hm_to_draw` again
-        "                                             because the variable has been decremented
-        "                                             in the previous for loop
+        call s:comment(cms_right, 'right', dir, len(coords_to_process))
+        "                                       │
+        "                                       └ can't use `hm_to_draw` again
+        "                                         because the variable has been decremented
+        "                                         in the previous for loop
     endif
 
     " restore the  coordinates in  case we  changed the  addresses of  the lines
