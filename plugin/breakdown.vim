@@ -17,8 +17,8 @@ nno <silent><unique> m{     :<c-u>call breakdown#expand('bucket', 'below')<cr>
 " I often press `g^` by accident, which atm makes us focus the first tabpage.
 " Too distracting.
 "}}}
-nno <silent><unique> +v :<c-u>call breakdown#put_error_sign_where('below')<bar>set opfunc=breakdown#put_error_sign<bar>norm! g@l<cr>
-nno <silent><unique> +V :<c-u>call breakdown#put_error_sign_where('above')<bar>set opfunc=breakdown#put_error_sign<bar>norm! g@l<cr>
+nno <silent><unique> +v :<c-u>call breakdown#put_error_sign_where('below')<bar>set opfunc=breakdown#put_error_sign<cr>g@l
+nno <silent><unique> +V :<c-u>call breakdown#put_error_sign_where('above')<bar>set opfunc=breakdown#put_error_sign<cr>g@l
 
 xno <silent><unique> +v :call breakdown#put_v('below')<cr>
 xno <silent><unique> +V :call breakdown#put_v('above')<cr>
