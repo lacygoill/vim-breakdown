@@ -1,3 +1,15 @@
+if exists('g:autoloaded_breakdown')
+    finish
+endif
+let g:autoloaded_breakdown = 1
+
+" Init {{{1
+
+fu s:snr() abort
+    return matchstr(expand('<sfile>'), '.*\zs<SNR>\d\+_')
+endfu
+let s:snr = get(s:, 'snr', s:snr())
+
 " Interface {{{1
 fu breakdown#mark() abort "{{{2
     " `w:bd_marks` may need to be initialized.
@@ -195,118 +207,10 @@ fu breakdown#clear_match() abort "{{{2
     endif
 endfu
 
-fu breakdown#put_error_sign(type) abort "{{{2
-    let error_sign = '✘'
-    let pointer = s:put_error_sign_location is# 'above'
-        \ ? 'v'
-        \ : '^'
-    let vcol = virtcol('.')
-    let cml = &ft is# 'markdown' ? '' : matchstr(&l:cms, '\S*\ze\s*%s')
-    let next_line = getline(line('.') + (s:put_error_sign_location is# 'above' ? -2 : 2))
-
-    if next_line =~# error_sign
-        " if our cursor is on the 20th cell, while the next lines occupy only 10
-        " cells the  next substitutions  will fail, because  they will  target a
-        " non-existing character;  need to prevent  that by appending  spaces if
-        " needed
-        let next_line_length = strchars(next_line, 1)
-        if vcol > next_line_length
-            let next_line ..= repeat(' ', vcol - next_line_length)
-        endif
-
-        let pat = '\%'..vcol..'v'..repeat('.', strchars(error_sign, 1))
-        let new_line = substitute(next_line, pat, error_sign, '')
-
-        if s:put_error_sign_location is# 'above'
-            --,-d_
-        else
-            +,++d_
-            -
-        endif
-    else
-        let indent = indent('.')
-        let spaces_between_cml_and_mark = repeat(' ', virtcol('.')-1-strchars(cml, 1)-indent)
-        let indent = repeat(' ', indent)
-        let new_line = indent..cml..spaces_between_cml_and_mark..error_sign
-    endif
-
-    if s:put_error_sign_location is# 'above'
-        let here = line('.')-1
-        call append(here, new_line)
-        call append(here+1, substitute(new_line, error_sign, pointer, 'g'))
-    else
-        let here = line('.')
-        call append(here, substitute(new_line, error_sign, pointer, 'g'))
-        call append(here+1, new_line)
-    endif
-    " Why this motion?{{{
-    "
-    " Without, `.` will  move the cursor at the beginning  of the line, probably
-    " because of the previous `:delete` command.
-    "}}}
-    exe 'norm! '..vcol..'|'
-    " Alternatively:{{{
-    "
-    " You could also have executed one of these right after the deletion:
-    "
-    "     --,-d_
-    "     +-
-    "
-    "     --,-d_
-    "     -+
-    "
-    "     --,-d_
-    "     -
-    "     +
-    "
-    "     --,-d_
-    "     +
-    "     -
-    "
-    " It would have prevented the cursor from jumping to the beginning of
-    " the line when pressing `.`.
-    "
-    " Question: How does it work?
-    "
-    " Answer: from `:h 'sol`
-    "
-    " >    ... When off the cursor is kept in the same column (if possible).
-    " >    This applies to the commands: ...
-    " >    Also for an Ex command that only has a line number, e.g., ":25" or ":+".
-    " >    In case  of **buffer changing  commands** the  cursor is placed  at the
-    " >    column where it was the last time the buffer was edited.
-    "
-    " MWE:
-    "
-    "     $ vim -Nu <(cat <<'EOF'
-    "     set nosol
-    "     nno cd :call Func()<cr>
-    "     fu Func() abort
-    "        --,-d_
-    "        call append(line('.')-1, 'the date is:')
-    "        call append(line('.')-1, strftime('%c'))
-    "     endfu
-    "     EOF
-    "     ) +"put =['the date is:', 'today', 'some text']"
-    "
-    "     " press `e` to move the cursor on the 'e' of 'some'
-    "     " press `cd`
-    "     " the cursor has jumped onto the first character of the line
-    "
-    " Again, you can fix the issue by adding `+-` right after `:d`.
-    "
-    " TODO:
-    " Question:
-    " Ok, `+-` doesn't make the column of the cursor change.
-    " But it doesn't matter, the column  of the cursor has *already* changed
-    " when `:d` is executed!
-    "
-    " Besides, if you execute the 4 commands manually (:d, +-, append() x 2),
-    " the issue is not fixed anymore.
-    "
-    " So why does  `+-` work differently depending on whether  it's inside a
-    " function, or outside?
-    "}}}
+fu breakdown#put_error_sign_setup(where) abort "{{{2
+    let s:put_error_sign_where = a:where
+    let &opfunc = s:snr..'put_error_sign'
+    return 'g@l'
 endfu
 
 fu breakdown#put_v(dir) abort "{{{2
@@ -532,6 +436,120 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
         \            'col'   : col,
         \ })
 endfu
+fu s:put_error_sign(_) abort "{{{2
+    let error_sign = '✘'
+    let pointer = s:put_error_sign_where is# 'above'
+        \ ? 'v'
+        \ : '^'
+    let vcol = virtcol('.')
+    let cml = &ft is# 'markdown' ? '' : matchstr(&l:cms, '\S*\ze\s*%s')
+    let next_line = getline(line('.') + (s:put_error_sign_where is# 'above' ? -2 : 2))
+
+    if next_line =~# error_sign
+        " if our cursor is on the 20th cell, while the next lines occupy only 10
+        " cells the  next substitutions  will fail, because  they will  target a
+        " non-existing character;  need to prevent  that by appending  spaces if
+        " needed
+        let next_line_length = strchars(next_line, 1)
+        if vcol > next_line_length
+            let next_line ..= repeat(' ', vcol - next_line_length)
+        endif
+
+        let pat = '\%'..vcol..'v'..repeat('.', strchars(error_sign, 1))
+        let new_line = substitute(next_line, pat, error_sign, '')
+
+        if s:put_error_sign_where is# 'above'
+            --,-d_
+        else
+            +,++d_
+            -
+        endif
+    else
+        let indent = indent('.')
+        let spaces_between_cml_and_mark = repeat(' ', virtcol('.')-1-strchars(cml, 1)-indent)
+        let indent = repeat(' ', indent)
+        let new_line = indent..cml..spaces_between_cml_and_mark..error_sign
+    endif
+
+    if s:put_error_sign_where is# 'above'
+        let here = line('.')-1
+        call append(here, new_line)
+        call append(here+1, substitute(new_line, error_sign, pointer, 'g'))
+    else
+        let here = line('.')
+        call append(here, substitute(new_line, error_sign, pointer, 'g'))
+        call append(here+1, new_line)
+    endif
+    " Why this motion?{{{
+    "
+    " Without, `.` will  move the cursor at the beginning  of the line, probably
+    " because of the previous `:delete` command.
+    "}}}
+    exe 'norm! '..vcol..'|'
+    " Alternatively:{{{
+    "
+    " You could also have executed one of these right after the deletion:
+    "
+    "     --,-d_
+    "     +-
+    "
+    "     --,-d_
+    "     -+
+    "
+    "     --,-d_
+    "     -
+    "     +
+    "
+    "     --,-d_
+    "     +
+    "     -
+    "
+    " It would have prevented the cursor from jumping to the beginning of
+    " the line when pressing `.`.
+    "
+    " Question: How does it work?
+    "
+    " Answer: from `:h 'sol`
+    "
+    " >    ... When off the cursor is kept in the same column (if possible).
+    " >    This applies to the commands: ...
+    " >    Also for an Ex command that only has a line number, e.g., ":25" or ":+".
+    " >    In case  of **buffer changing  commands** the  cursor is placed  at the
+    " >    column where it was the last time the buffer was edited.
+    "
+    " MWE:
+    "
+    "     $ vim -Nu <(cat <<'EOF'
+    "     set nosol
+    "     nno cd :call Func()<cr>
+    "     fu Func() abort
+    "        --,-d_
+    "        call append(line('.')-1, 'the date is:')
+    "        call append(line('.')-1, strftime('%c'))
+    "     endfu
+    "     EOF
+    "     ) +"put =['the date is:', 'today', 'some text']"
+    "
+    "     " press `e` to move the cursor on the 'e' of 'some'
+    "     " press `cd`
+    "     " the cursor has jumped onto the first character of the line
+    "
+    " Again, you can fix the issue by adding `+-` right after `:d`.
+    "
+    " TODO:
+    " Question:
+    " Ok, `+-` doesn't make the column of the cursor change.
+    " But it doesn't matter, the column  of the cursor has *already* changed
+    " when `:d` is executed!
+    "
+    " Besides, if you execute the 4 commands manually (:d, +-, append() x 2),
+    " the issue is not fixed anymore.
+    "
+    " So why does  `+-` work differently depending on whether  it's inside a
+    " function, or outside?
+    "}}}
+endfu
+
 " }}}1
 " Misc. {{{1
 fu s:mark_init() abort "{{{2
@@ -548,10 +566,6 @@ fu s:mark_init() abort "{{{2
         " and add a bar at the end of the pattern, to prepare for the new branch
         let w:bd_marks.pat ..= '\|'
     endif
-endfu
-
-fu breakdown#put_error_sign_where(dir) abort "{{{2
-    let s:put_error_sign_location = a:dir
 endfu
 
 fu s:update_coords() abort "{{{2
