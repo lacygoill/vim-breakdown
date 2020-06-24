@@ -231,6 +231,8 @@ fu breakdown#put_v(dir) abort "{{{2
     let pat = '\%>'..col1..'v\%<'..col2..'v.\|\%'..col1..'v.\|\%'..col2..'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
     let line = substitute(line, '\s*$', '', '')
+    " `^---^` is nicer than `^^^^^`
+    let line = substitute(line, '[v^]\zs.*\ze[v^]', {m-> repeat('-', len(m[0]))}, '')
     if &ft is# 'markdown'
         let offset = (a:dir is# 'below' ? 1 : -1)
         let existing_line = getline(line('.') + offset)
