@@ -364,10 +364,8 @@ fu s:merge_lines(line, existing_line) abort "{{{2
     let i = 0
     let longest = split(longest, '\zs')
     for char in split(shortest, '\zs')
-        if char is# '^'
-            let longest[i] = '^'
-        elseif char is# 'v'
-            let longest[i] = 'v'
+        if char =~# '[v^-]'
+            let longest[i] = char
         endif
         let i += 1
     endfor
