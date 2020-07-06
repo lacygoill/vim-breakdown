@@ -233,29 +233,25 @@ fu breakdown#put_v(dir) abort "{{{2
     let line = substitute(line, '\s*$', '', '')
     " `^---^` is nicer than `^^^^^`
     let line = substitute(line, '[v^]\zs.*\ze[v^]', {m-> repeat('-', len(m[0]))}, '')
-    if &ft is# 'markdown'
-        let offset = (a:dir is# 'below' ? 1 : -1)
-        let existing_line = getline(line('.') + offset)
+    if &l:cms is# '' || &ft is# 'markdown'
+        let [cml_start, cml_end] =  ['', '']
+    else
+        let [cml_start, cml_end] = split(&l:cms, '%s', 1)
+    endif
+    let indent = indent('.')
+    let line = repeat(' ', indent)
+        \ ..cml_start
+        \ ..line[strchars(cml_start,  1) + indent :]
+        \ ..(!empty(cml_end) ? ' ' : '')..cml_end
+    " if  there are  already  marks on  the line  below/above,  don't add  a
+    " new  line  with `append()`,  instead  replace  the current  line  with
+    " `setline()`, merging its existing marks with the new ones
+    let offset = (a:dir is# 'below' ? 1 : -1)
+    let existing_line = getline(line('.') + offset)
+    if existing_line =~# '^\s*\V'..escape(cml_start, '\')..'\m[ v^-]*$'
         let line = s:merge_lines(line, existing_line)
         call setline(line('.') + offset, line)
         return
-    elseif &l:cms isnot# ''
-        let [cml_start, cml_end] = split(&l:cms, '%s', 1)
-        let indent = indent('.')
-        let line = repeat(' ', indent)
-            \ ..cml_start
-            \ ..line[strchars(cml_start,  1) + indent :]
-            \ ..(!empty(cml_end) ? ' ' : '')..cml_end
-        " if  there are  already  marks on  the line  below/above,  don't add  a
-        " new  line  with `append()`,  instead  replace  the current  line  with
-        " `setline()`, merging its existing marks with the new ones
-        let offset = (a:dir is# 'below' ? 1 : -1)
-        let existing_line = getline(line('.') + offset)
-        if existing_line =~# '^\s*\V'..escape(cml_start, '\')..'\m[ v^]*$'
-            let line = s:merge_lines(line, existing_line)
-            call setline(line('.') + offset, line)
-            return
-        endif
     endif
     call append(a:dir is# 'below' ? '.' : line('.')-1, line)
 endfu
