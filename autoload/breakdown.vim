@@ -5,10 +5,11 @@ let g:autoloaded_breakdown = 1
 
 " Init {{{1
 
-fu s:snr() abort
-    return matchstr(expand('<sfile>'), '.*\zs<SNR>\d\+_')
+fu s:SID() abort
+    return expand('<sfile>')->matchstr('<SNR>\zs\d\+\ze_SID$')->str2nr()
 endfu
-let s:snr = get(s:, 'snr', s:snr())
+let s:SID = s:SID()->printf('<SNR>%d_')
+delfu s:SID
 
 " Interface {{{1
 fu breakdown#mark() abort "{{{2
@@ -209,7 +210,7 @@ endfu
 
 fu breakdown#put_error_sign_setup(where) abort "{{{2
     let s:put_error_sign_where = a:where
-    let &opfunc = s:snr..'put_error_sign'
+    let &opfunc = s:SID .. 'put_error_sign'
     return 'g@l'
 endfu
 
@@ -217,7 +218,8 @@ fu breakdown#put_v(dir) abort "{{{2
     if line("'<") != line("'>")
         return
     endif
-    let line = substitute(getline('.'), '.', ' ', 'g')
+    " we need `strdisplaywidth()` in case the line contains multicell characters, like tabs
+    let line = getline('.')->substitute('.', {m -> ' '->repeat(strdisplaywidth(m[0], virtcol('.')))}, 'g')
     let col1 = min([virtcol("'<"), virtcol("'>")])
     let col2 = max([virtcol("'<"), virtcol("'>")])
     " Describes all the characters which were visually selected.{{{
@@ -455,9 +457,9 @@ fu s:put_error_sign(_) abort "{{{2
         let new_line = substitute(next_line, pat, error_sign, '')
 
         if s:put_error_sign_where is# 'above'
-            --,-d_
+            keepj --,-d_
         else
-            +,++d_
+            keepj +,++d_
             -
         endif
     else
