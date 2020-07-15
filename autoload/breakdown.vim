@@ -518,13 +518,13 @@ fu s:put_error_sign(_) abort "{{{2
     " MWE:
     "
     "     $ vim -Nu <(cat <<'EOF'
-    "     set nosol
-    "     nno cd :call Func()<cr>
-    "     fu Func() abort
-    "        --,-d_
-    "        call append(line('.')-1, 'the date is:')
-    "        call append(line('.')-1, strftime('%c'))
-    "     endfu
+    "         set nosol
+    "         nno cd :call Func()<cr>
+    "         fu Func() abort
+    "            --,-d_
+    "            call append(line('.')-1, 'the date is:')
+    "            call append(line('.')-1, strftime('%c'))
+    "         endfu
     "     EOF
     "     ) +"put =['the date is:', 'today', 'some text']"
     "
@@ -535,7 +535,7 @@ fu s:put_error_sign(_) abort "{{{2
     " Again, you can fix the issue by adding `+-` right after `:d`.
     "
     " TODO:
-    " Question:
+    "
     " Ok, `+-` doesn't make the column of the cursor change.
     " But it doesn't matter, the column  of the cursor has *already* changed
     " when `:d` is executed!
