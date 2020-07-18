@@ -8,7 +8,7 @@ let g:autoloaded_breakdown = 1
 fu s:SID() abort
     return expand('<sfile>')->matchstr('<SNR>\zs\d\+\ze_SID$')->str2nr()
 endfu
-let s:SID = s:SID()->printf('<SNR>%d_')
+const s:SID = s:SID()->printf('<SNR>%d_')
 delfu s:SID
 
 " Interface {{{1
