@@ -74,7 +74,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
 
     " make sure that:{{{
     "
-    "    - `'ve'` allows us to draw freely
+    "    - `'ve'` lets us draw freely
     "    - `'tw'` and `'wm'` don't break a long line
     "    - `'fdm'` doesn't make the edition slow in the middle of a big folded file
     "}}}
@@ -180,8 +180,8 @@ fu breakdown#expand(shape, dir) abort "{{{2
     endif
 
     " restore the  coordinates in  case we  changed the  addresses of  the lines
-    " during the  expansion; this restoration  allows us to  re-expand correctly
-    " the diagram later (after an undo), if we hit the wrong mapping by accident
+    " during the  expansion; this  restoration lets  us re-expand  correctly the
+    " diagram later (after an undo), if we hit the wrong mapping by accident
     let w:bd_marks.coords = coords_save
 
     " restore the original values of the options we changed
