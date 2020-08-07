@@ -1,16 +1,3 @@
-if exists('g:autoloaded_breakdown')
-    finish
-endif
-let g:autoloaded_breakdown = 1
-
-" Init {{{1
-
-fu s:SID() abort
-    return expand('<sfile>')->matchstr('<SNR>\zs\d\+\ze_SID$')->str2nr()
-endfu
-const s:SID = s:SID()->printf('<SNR>%d_')
-delfu s:SID
-
 " Interface {{{1
 fu breakdown#mark() abort "{{{2
     " `w:bd_marks` may need to be initialized.
@@ -19,14 +6,15 @@ fu breakdown#mark() abort "{{{2
     call s:update_coords()
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
-    let w:bd_marks.pat = map(deepcopy(w:bd_marks.coords), {_,v -> '\%'..v.line..'l\%'..v.col..'v.'})
-    let w:bd_marks.pat = join(w:bd_marks.pat, '\|')
+    let w:bd_marks.pat = deepcopy(w:bd_marks.coords)
+        \ ->map({_, v -> '\%' .. v.line .. 'l\%' .. v.col .. 'v.'})
+        \ ->join('\|')
     " When do we need to use `deepcopy()` instead of `copy()` ?{{{
     "
-    " Every time we need to make a copy of the coordinates, we have to use
-    " `deepcopy()`. We can't use `copy()`, because each item in the list of
-    " coordinates is a dictionary, not just a simple data structure such as
-    " a number or a string.
+    " Every time  we need  to make  a copy of  the coordinates,  we have  to use
+    " `deepcopy()`.  We  can't use `copy()`,  because each  item in the  list of
+    " coordinates is  a dictionary, not just  a simple data structure  such as a
+    " number or a string.
     "
     " `copy()` would create a new list of coordinates, but whose items would
     " share the same references as the ones in the original list.
@@ -35,11 +23,11 @@ fu breakdown#mark() abort "{{{2
     "}}}
     " Here, do we need `deepcopy()`?{{{
     "
-    " Here, probably not. But later, yes.
+    " Here, probably not.  But later, yes.
     "
     " Here,  we  don't change  any  key  of  the  dictionaries inside  the  list
-    " `w:bd_marks.coords`. We simply use each dictionary to build a string which
-    " populates a list (the one returned by `map()`).
+    " `w:bd_marks.coords`.   We simply  use each  dictionary to  build a  string
+    " which populates a list (the one returned by `map()`).
     "
     " Later, we  may update the 'line'  key of each dictionary  (happens when we
     " expand the diagram above).
@@ -96,9 +84,6 @@ fu breakdown#expand(shape, dir) abort "{{{2
     " stand for one branch of the latter.
     " Therefore, the `for`  loop which will progressively draw  the diagram must
     " iterate over half of the coordinates.
-    let coords_to_process = a:shape is# 'bucket'
-        \ ? filter(deepcopy(w:bd_marks.coords), {i -> i%2 == 0})
-        \ : deepcopy(w:bd_marks.coords)
     " Why `deepcopy()`?{{{
     "
     " Because   we   may   update    the   line   coordinates,   later,   inside
@@ -121,15 +106,19 @@ fu breakdown#expand(shape, dir) abort "{{{2
     " But even then, the plugin wouldn't work as expected, because when we would
     " try to draw a bucket diagram above a line, it would be too high.
     "}}}
+    let coords_to_process = deepcopy(w:bd_marks.coords)
+    if a:shape is# 'bucket'
+        call filter(coords_to_process, {i -> i % 2 == 0})
+    endif
 
     " How Many lines of the diagram are still TO be DRAWn
     let hm_to_draw = len(coords_to_process)
 
     " make sure the cursor is on the line containing marked characters
-    exe 'norm! '..w:bd_marks.coords[0].line..'G'
+    exe 'norm! ' .. w:bd_marks.coords[0].line .. 'G'
 
     " open enough new lines to draw diagram
-    call append(line('.') + dir, repeat([''], hm_to_draw + 1))
+    call repeat([''], hm_to_draw + 1)->append(line('.') + dir)
 
     " if we've just opened new lines above (instead of below) ...
     if dir == -1
@@ -210,7 +199,7 @@ endfu
 
 fu breakdown#put_error_sign_setup(where) abort "{{{2
     let s:put_error_sign_where = a:where
-    let &opfunc = s:SID .. 'put_error_sign'
+    let &opfunc = expand('<SID>') .. 'put_error_sign'
     return 'g@l'
 endfu
 
@@ -219,7 +208,8 @@ fu breakdown#put_v(dir) abort "{{{2
         return
     endif
     " we need `strdisplaywidth()` in case the line contains multicell characters, like tabs
-    let line = getline('.')->substitute('.', {m -> ' '->repeat(strdisplaywidth(m[0], virtcol('.')))}, 'g')
+    let line = getline('.')
+        \ ->substitute('.', {m -> ' '->repeat(strdisplaywidth(m[0], virtcol('.')))}, 'g')
     let col1 = min([virtcol("'<"), virtcol("'>")])
     let col2 = max([virtcol("'<"), virtcol("'>")])
     " Describes all the characters which were visually selected.{{{
@@ -230,32 +220,32 @@ fu breakdown#put_v(dir) abort "{{{2
     "    - on the mark '<
     "    - on the mark '>
     "}}}
-    let pat = '\%>'..col1..'v\%<'..col2..'v.\|\%'..col1..'v.\|\%'..col2..'v.'
+    let pat = '\%>' .. col1 .. 'v\%<' .. col2 .. 'v.\|\%' .. col1 .. 'v.\|\%' .. col2 .. 'v.'
     let line = substitute(line, pat, a:dir is# 'below' ? '^' : 'v', 'g')
     let line = substitute(line, '\s*$', '', '')
     " `^---^` is nicer than `^^^^^`
     let line = substitute(line, '[v^]\zs.*\ze[v^]', {m-> repeat('-', len(m[0]))}, '')
-    if &l:cms is# '' || &ft is# 'markdown'
-        let [cml_start, cml_end] =  ['', '']
+    if &l:cms == '' || &ft is# 'markdown'
+        let [cml_start, cml_end] = ['', '']
     else
         let [cml_start, cml_end] = split(&l:cms, '%s', 1)
     endif
     let indent = indent('.')
     let line = repeat(' ', indent)
-        \ ..cml_start
-        \ ..line[strchars(cml_start,  1) + indent :]
-        \ ..(!empty(cml_end) ? ' ' : '')..cml_end
+        \ .. cml_start
+        \ .. line[strchars(cml_start, 1) + indent :]
+        \ .. (!empty(cml_end) ? ' ' : '') .. cml_end
     " if  there are  already  marks on  the line  below/above,  don't add  a
     " new  line  with `append()`,  instead  replace  the current  line  with
     " `setline()`, merging its existing marks with the new ones
     let offset = (a:dir is# 'below' ? 1 : -1)
-    let existing_line = getline(line('.') + offset)
-    if existing_line =~# '^\s*\V'..escape(cml_start, '\')..'\m[ v^-]*$'
+    let existing_line = (line('.') + offset)->getline()
+    if existing_line =~# '^\s*\V' .. escape(cml_start, '\') .. '\m[ v^-]*$'
         let line = s:merge_lines(line, existing_line)
         call setline(line('.') + offset, line)
         return
     endif
-    call append(a:dir is# 'below' ? '.' : line('.')-1, line)
+    call append(a:dir is# 'below' ? '.' : line('.') - 1, line)
 endfu
 " }}}1
 " Core {{{1
@@ -263,7 +253,7 @@ fu s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
     " This function draws a branch of the diagram.
 
     " reposition cursor before drawing the next branch
-    exe 'norm! '..a:coord.line..'G'..a:coord.col..'|'
+    exe 'norm! ' .. a:coord.line .. 'G' .. a:coord.col .. '|'
 
     if a:is_bucket
         call s:draw_bucket(a:dir, a:hm_to_draw, a:coord)
@@ -273,18 +263,18 @@ fu s:draw(is_bucket, dir, coord, hm_to_draw) abort "{{{2
 endfu
 
 fu s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
-    let [dir, hm_to_draw, coord]  = [a:dir, a:hm_to_draw, a:coord]
+    let [dir, hm_to_draw, coord] = [a:dir, a:hm_to_draw, a:coord]
 
     " get the index of the current marked character inside the list of
-    " coordinates (w:bd_marks.coords)
+    " coordinates (`w:bd_marks.coords`)
     let i = index(w:bd_marks.coords, coord)
     " get the width of the `───` segment to draw above the item to describe
     let w = w:bd_marks.coords[i+1].col - coord.col - 1
 
     if dir == -1
         " draw `├───┐`
-        exe 'norm! kR├'..repeat('─', w)..'┐'
-        exe 'norm! '..(w+1)..'h'
+        exe 'norm! kR├' .. repeat('─', w) .. '┐'
+        exe 'norm! ' .. (w+1) .. 'h'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
             norm! kr│
@@ -294,8 +284,8 @@ fu s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
 
     else
         " draw `├───┘`
-        exe 'norm! jR├'..repeat('─', w)..'┘'
-        exe 'norm! '..(w+1)..'h'
+        exe 'norm! jR├' .. repeat('─', w) .. '┘'
+        exe 'norm! ' .. (w+1) .. 'h'
         " draw the `│` column
         for i in range(1, hm_to_draw - 1)
             norm! jr│
@@ -306,7 +296,7 @@ fu s:draw_bucket(dir, hm_to_draw, coord) abort "{{{2
 endfu
 
 fu s:draw_non_bucket(dir, hm_to_draw) abort "{{{2
-    let [dir, hm_to_draw]  = [a:dir, a:hm_to_draw]
+    let [dir, hm_to_draw] = [a:dir, a:hm_to_draw]
 
     if dir == -1
         " draw the `│` column
@@ -338,7 +328,7 @@ fu s:comment(what, where, dir, hm_to_draw) abort "{{{2
 
     " Before beginning commenting the lines of the diagram, make sure the cursor
     " is on the line we're describing.
-    exe 'norm! '..w:bd_marks.coords[0].line..'G'
+    exe 'norm! ' .. w:bd_marks.coords[0].line .. 'G'
 
     let indent = repeat(' ', indent('.'))
 
@@ -348,8 +338,8 @@ fu s:comment(what, where, dir, hm_to_draw) abort "{{{2
         exe (a:dir == -1 ? '-' : '+')
 
         let rep = a:where is# 'left'
-              \ ?     indent..a:what
-              \ :     substitute(getline('.'), '$', ' '..a:what, '')
+            \ ?     indent .. a:what
+            \ :     getline('.')->substitute('$', ' ' .. a:what, '')
 
         call setline('.', rep)
     endfor
@@ -393,9 +383,9 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     " cause  an issue  for the  byte index  of the  beginning of  a line  in the
     " diagram in the location list?
     "
-    " No. Because before the beginning of a line in the diagram, there are only
+    " No.  Because before the beginning of a line in the diagram, there are only
     " spaces (and optionally comment characters).
-    " And spaces  aren't multi-byte. So, the  byte index  of the beginning  of a
+    " And spaces  aren't multi-byte.  So, the  byte index of the  beginning of a
     " line in the diagram matches the  visual column of the corresponding marked
     " character.
     "}}}
@@ -408,7 +398,7 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
 
             let i = index(w:bd_marks.coords, coord)
 
-            let col = w:bd_marks.coords[i].col + (len(w:bd_marks.coords)/2 - hm_to_draw)*2 + 4
+            let col = w:bd_marks.coords[i].col + (len(w:bd_marks.coords) / 2 - hm_to_draw) * 2 + 4
             "         │                          │
             "         │                          └ before `[└┌]`, there could be some `│`:
             "         │                            add 2 bytes for each of them
@@ -418,9 +408,9 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
             " The weight of our multi-byte characters is 3, so why do we add only 2 bytes for each of them?
             " Because with `coord.col`, we already added one byte for each of them.
         else
-            let col = coord.col + 2*(len(w:bd_marks.coords) - hm_to_draw) + (1*2)+1
-            "         │           │                                          │
-            "         │           │                                          └ add 3 as a fixed offset
+            let col = coord.col + 2 * (len(w:bd_marks.coords) - hm_to_draw) + (1 * 2) + 1
+            "         │           │                                            │
+            "         │           │                                            └ add 3 as a fixed offset
             "         │           │
             "         │           └ before `└`, there could be some `│`:
             "         │             add 2 bytes for each of them
@@ -429,10 +419,10 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
         endif
 
         call add(w:bd_marks.loclist, {
-        \            'bufnr' : bufnr('%'),
-        \            'lnum'  : coord.line + (dir == -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
-        \            'col'   : col,
-        \ })
+            \ 'bufnr': bufnr('%'),
+            \ 'lnum': coord.line + (dir == -1 ? -hm_to_draw - 1 : hm_to_draw + 1),
+            \ 'col': col,
+            \ })
 endfu
 fu s:put_error_sign(_) abort "{{{2
     let error_sign = '✘'
@@ -441,7 +431,7 @@ fu s:put_error_sign(_) abort "{{{2
         \ : '^'
     let vcol = virtcol('.')
     let cml = &ft is# 'markdown' ? '' : matchstr(&l:cms, '\S*\ze\s*%s')
-    let next_line = getline(line('.') + (s:put_error_sign_where is# 'above' ? -2 : 2))
+    let next_line = (line('.') + (s:put_error_sign_where is# 'above' ? -2 : 2))->getline()
 
     if next_line =~# error_sign
         " if our cursor is on the 20th cell, while the next lines occupy only 10
@@ -453,7 +443,7 @@ fu s:put_error_sign(_) abort "{{{2
             let next_line ..= repeat(' ', vcol - next_line_length)
         endif
 
-        let pat = '\%'..vcol..'v'..repeat('.', strchars(error_sign, 1))
+        let pat = '\%' .. vcol .. 'v' .. repeat('.', strchars(error_sign, 1))
         let new_line = substitute(next_line, pat, error_sign, '')
 
         if s:put_error_sign_where is# 'above'
@@ -464,26 +454,26 @@ fu s:put_error_sign(_) abort "{{{2
         endif
     else
         let indent = indent('.')
-        let spaces_between_cml_and_mark = repeat(' ', virtcol('.')-1-strchars(cml, 1)-indent)
+        let spaces_between_cml_and_mark = repeat(' ', virtcol('.') - 1 - strchars(cml, 1) - indent)
         let indent = repeat(' ', indent)
-        let new_line = indent..cml..spaces_between_cml_and_mark..error_sign
+        let new_line = indent .. cml .. spaces_between_cml_and_mark .. error_sign
     endif
 
     if s:put_error_sign_where is# 'above'
-        let here = line('.')-1
+        let here = line('.') - 1
         call append(here, new_line)
-        call append(here+1, substitute(new_line, error_sign, pointer, 'g'))
+        call substitute(new_line, error_sign, pointer, 'g')->append(here + 1)
     else
         let here = line('.')
-        call append(here, substitute(new_line, error_sign, pointer, 'g'))
-        call append(here+1, new_line)
+        call substitute(new_line, error_sign, pointer, 'g')->append(here)
+        call append(here + 1, new_line)
     endif
     " Why this motion?{{{
     "
     " Without, `.` will  move the cursor at the beginning  of the line, probably
     " because of the previous `:delete` command.
     "}}}
-    exe 'norm! '..vcol..'|'
+    exe 'norm! ' .. vcol .. '|'
     " Alternatively:{{{
     "
     " You could also have executed one of these right after the deletion:
@@ -522,8 +512,8 @@ fu s:put_error_sign(_) abort "{{{2
     "         nno cd :call Func()<cr>
     "         fu Func() abort
     "            --,-d_
-    "            call append(line('.')-1, 'the date is:')
-    "            call append(line('.')-1, strftime('%c'))
+    "            call append(line('.') - 1, 'the date is:')
+    "            call strftime('%c')->append(line('.') - 1)
     "         endfu
     "     EOF
     "     ) +"put =['the date is:', 'today', 'some text']"
@@ -553,9 +543,9 @@ endfu
 fu s:mark_init() abort "{{{2
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
-            \ 'coords' : [],
-            \ 'pat'    : '',
-            \ 'id'     :  0,
+            \ 'coords': [],
+            \ 'pat': '',
+            \ 'id': 0,
             \ }
     elseif w:bd_marks.id
         " if there's a match, delete it because we're going to update it:
@@ -577,16 +567,15 @@ fu s:update_coords() abort "{{{2
             \  >= 0
 
             call filter(w:bd_marks.coords,
-                \ {_,v ->  v !=# {'line' : line('.'), 'col' : virtcol('.')}}
-                \ )
+                \ {_, v -> v !=# {'line' : line('.'), 'col' : virtcol('.')}})
         else
 
             " ... otherwise, add the current position to the list of coordinates
 
             let w:bd_marks.coords += [{
-            \       'line' : line('.'),
-            \       'col'  : virtcol('.'),
-            \ }]
+                \ 'line': line('.'),
+                \ 'col': virtcol('.'),
+                \ }]
         endif
 
     else
@@ -594,9 +583,9 @@ fu s:update_coords() abort "{{{2
     " completely the list of coordinates.
 
         let w:bd_marks.coords = [{
-        \       'line' : line('.'),
-        \       'col'  : virtcol('.'),
-        \ }]
+            \ 'line': line('.'),
+            \ 'col': virtcol('.'),
+            \ }]
     endif
 endfu
 

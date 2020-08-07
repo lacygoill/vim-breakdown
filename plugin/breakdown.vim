@@ -3,14 +3,14 @@ if exists('g:loaded_breakdown')
 endif
 let g:loaded_breakdown = 1
 
-nno <silent><unique> m<cr>  :<c-u>call breakdown#mark()<cr>
+nno <silent><unique> m<cr> :<c-u>call breakdown#mark()<cr>
 nno <silent><unique> m<c-h> :<c-u>call breakdown#clear_match()<cr>
 
-nno <silent><unique> m)     :<c-u>call breakdown#expand('simple', 'above')<cr>
-nno <silent><unique> m}     :<c-u>call breakdown#expand('simple', 'below')<cr>
+nno <silent><unique> m) :<c-u>call breakdown#expand('simple', 'above')<cr>
+nno <silent><unique> m} :<c-u>call breakdown#expand('simple', 'below')<cr>
 
-nno <silent><unique> m(     :<c-u>call breakdown#expand('bucket', 'above')<cr>
-nno <silent><unique> m{     :<c-u>call breakdown#expand('bucket', 'below')<cr>
+nno <silent><unique> m( :<c-u>call breakdown#expand('bucket', 'above')<cr>
+nno <silent><unique> m{ :<c-u>call breakdown#expand('bucket', 'below')<cr>
 
 " Why not `+^`?{{{
 "
@@ -42,10 +42,10 @@ xno <silent><unique> +V :call breakdown#put_v('above')<cr>
 "
 " We would have to change the mappings like this:
 "
-" nno <silent>   m((   :<c-u>call breakdown#main('bucket', 'above', 'before')<cr>
-" nno <silent>   m()   :<c-u>call breakdown#main('bucket', 'above', 'after')<cr>
-" nno <silent>   m)(   :<c-u>call breakdown#main('simple', 'above', 'before')<cr>
-" nno <silent>   m))   :<c-u>call breakdown#main('simple', 'above', 'after')<cr>
+" nno <silent> m(( :<c-u>call breakdown#main('bucket', 'above', 'before')<cr>
+" nno <silent> m() :<c-u>call breakdown#main('bucket', 'above', 'after')<cr>
+" nno <silent> m)( :<c-u>call breakdown#main('simple', 'above', 'before')<cr>
+" nno <silent> m)) :<c-u>call breakdown#main('simple', 'above', 'after')<cr>
 "
 " And adapt `draw()` and `populate_loclist()`.
 "
