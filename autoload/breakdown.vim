@@ -227,6 +227,8 @@ fu breakdown#put_v(dir) abort "{{{2
     let line = substitute(line, '[v^]\zs.*\ze[v^]', {m-> repeat('-', len(m[0]))}, '')
     if &l:cms == '' || &ft is# 'markdown'
         let [cml_start, cml_end] = ['', '']
+    elseif &ft is# 'vim'
+        let [cml_start, cml_end] = s:isVim9Comment() ? ['#', ''] : ['"', '']
     else
         let [cml_start, cml_end] = split(&l:cms, '%s', 1)
     endif
@@ -379,13 +381,13 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
     " so `coord.col` is a visual column, not a byte index.
     " But we need the byte index of the beginning of a line in the diagram.
     "
-    " If  there are  multi-byte characters  before a  marked character,  does it
-    " cause  an issue  for the  byte index  of the  beginning of  a line  in the
-    " diagram in the location list?
+    " If there are multibyte characters before a marked character, does it cause
+    " an issue for the  byte index of the beginning of a line  in the diagram in
+    " the location list?
     "
     " No.  Because before the beginning of a line in the diagram, there are only
     " spaces (and optionally comment characters).
-    " And spaces  aren't multi-byte.  So, the  byte index of the  beginning of a
+    " And spaces  aren't multibyte.  So,  the byte index  of the beginning  of a
     " line in the diagram matches the  visual column of the corresponding marked
     " character.
     "}}}
@@ -405,7 +407,7 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
             "         │
             "         └ byte index of the next marked character (the one above/below `[┤├]`)
             " NOTE:
-            " The weight of our multi-byte characters is 3, so why do we add only 2 bytes for each of them?
+            " The weight of our multibyte characters is 3, so why do we add only 2 bytes for each of them?
             " Because with `coord.col`, we already added one byte for each of them.
         else
             let col = coord.col + 2 * (len(w:bd_marks.coords) - hm_to_draw) + (1 * 2) + 1
@@ -425,15 +427,22 @@ fu s:populate_loclist(is_bucket, coord, dir, hm_to_draw) abort "{{{2
             \ })
 endfu
 fu s:put_error_sign(_) abort "{{{2
-    let error_sign = '✘'
+    let ballot = '✘'
+    let checkmark = '✔'
     let pointer = s:put_error_sign_where is# 'above'
         \ ? 'v'
         \ : '^'
     let vcol = virtcol('.')
-    let cml = &ft is# 'markdown' ? '' : matchstr(&l:cms, '\S*\ze\s*%s')
+    if &ft is# 'markdown'
+        let cml = ''
+    elseif &ft is# 'vim'
+        let cml = s:isVim9Comment() ? '#' : '"'
+    else
+        let cml = matchstr(&l:cms, '\S*\ze\s*%s')
+    endif
     let next_line = (line('.') + (s:put_error_sign_where is# 'above' ? -2 : 2))->getline()
 
-    if next_line =~# error_sign
+    if next_line =~# ballot
         " if our cursor is on the 20th cell, while the next lines occupy only 10
         " cells the  next substitutions  will fail, because  they will  target a
         " non-existing character;  need to prevent  that by appending  spaces if
@@ -443,8 +452,8 @@ fu s:put_error_sign(_) abort "{{{2
             let next_line ..= repeat(' ', vcol - next_line_length)
         endif
 
-        let pat = '\%' .. vcol .. 'v' .. repeat('.', strchars(error_sign, 1))
-        let new_line = substitute(next_line, pat, error_sign, '')
+        let pat = '\%' .. vcol .. 'v' .. repeat('.', strchars(ballot, 1))
+        let new_line = substitute(next_line, pat, ballot, '')
 
         if s:put_error_sign_where is# 'above'
             keepj --,-d_
@@ -456,16 +465,18 @@ fu s:put_error_sign(_) abort "{{{2
         let indent = indent('.')
         let spaces_between_cml_and_mark = repeat(' ', virtcol('.') - 1 - strchars(cml, 1) - indent)
         let indent = repeat(' ', indent)
-        let new_line = indent .. cml .. spaces_between_cml_and_mark .. error_sign
+        let new_line = indent .. cml .. spaces_between_cml_and_mark .. ballot
     endif
 
     if s:put_error_sign_where is# 'above'
         let here = line('.') - 1
         call append(here, new_line)
-        call substitute(new_line, error_sign, pointer, 'g')->append(here + 1)
+        call substitute(new_line, ballot .. '\|' .. checkmark, pointer, 'g')
+            \ ->append(here + 1)
     else
         let here = line('.')
-        call substitute(new_line, error_sign, pointer, 'g')->append(here)
+        call substitute(new_line, ballot .. '\|' .. checkmark, pointer, 'g')
+            \ ->append(here)
         call append(here + 1, new_line)
     endif
     " Why this motion?{{{
@@ -499,11 +510,11 @@ fu s:put_error_sign(_) abort "{{{2
     "
     " Answer: from `:h 'sol`
     "
-    " >    ... When off the cursor is kept in the same column (if possible).
-    " >    This applies to the commands: ...
-    " >    Also for an Ex command that only has a line number, e.g., ":25" or ":+".
-    " >    In case  of **buffer changing  commands** the  cursor is placed  at the
-    " >    column where it was the last time the buffer was edited.
+    "    > ... When off the cursor is kept in the same column (if possible).
+    "    > This applies to the commands: ...
+    "    > Also for an Ex command that only has a line number, e.g., ":25" or ":+".
+    "    > In case  of **buffer changing  commands** the  cursor is placed  at the
+    "    > column where it was the last time the buffer was edited.
     "
     " MWE:
     "
@@ -537,7 +548,6 @@ fu s:put_error_sign(_) abort "{{{2
     " function, or outside?
     "}}}
 endfu
-
 " }}}1
 " Misc. {{{1
 fu s:mark_init() abort "{{{2
@@ -589,3 +599,8 @@ fu s:update_coords() abort "{{{2
     endif
 endfu
 
+fu s:isVim9Comment() abort "{{{2
+    return synstack('.', col('.'))
+        \ ->map("synIDattr(v:val, 'name')")
+        \ ->match('vim9linecomment') != -1
+endfu
