@@ -40,7 +40,7 @@ fu breakdown#mark() abort "{{{2
 
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
-        \ ? matchadd('SpellBad', w:bd_marks.pat)
+        \ ? matchadd('SpellBad', w:bd_marks.pat, 0)
         \ : 0
 endfu
 
