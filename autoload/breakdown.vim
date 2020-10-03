@@ -138,8 +138,8 @@ fu breakdown#expand(shape, dir) abort "{{{2
     " in  a markdown  buffer, because  a diagram  won't cause  errors there,  so
     " there's no need to
     if !empty(&l:cms) && index(['markdown', 'text'], &ft) == -1
-        let [cms_left, cms_right] = split(&l:cms, '%s', 1)
-        call s:comment(cms_left, 'left', dir, hm_to_draw)
+        let [cml_left, _] = s:getcml()
+        call s:comment(cml_left, 'left', dir, hm_to_draw)
     endif
 
     " initialize empty location list
@@ -160,8 +160,8 @@ fu breakdown#expand(shape, dir) abort "{{{2
 
     " if there's a commentstring which has a non empty right part,
     " comment the right side of the diagram lines
-    if exists('cms_right') && !empty(cms_right)
-        call s:comment(cms_right, 'right', dir, len(coords_to_process))
+    if exists('cml_right') && !empty(cml_right)
+        call s:comment(cml_right, 'right', dir, len(coords_to_process))
         "                                       │
         "                                       └ can't use `hm_to_draw` again
         "                                         because the variable has been decremented
@@ -225,24 +225,18 @@ fu breakdown#put_v(dir) abort "{{{2
     let line = substitute(line, '\s*$', '', '')
     " `^---^` is nicer than `^^^^^`
     let line = substitute(line, '[v^]\zs.*\ze[v^]', {m-> repeat('-', len(m[0]))}, '')
-    if &l:cms == '' || &ft is# 'markdown'
-        let [cml_start, cml_end] = ['', '']
-    elseif &ft is# 'vim'
-        let [cml_start, cml_end] = s:isVim9Comment() ? ['#', ''] : ['"', '']
-    else
-        let [cml_start, cml_end] = split(&l:cms, '%s', 1)
-    endif
+    let [cml_left, cml_right] = s:getcml()
     let indent = indent('.')
     let line = repeat(' ', indent)
-        \ .. cml_start
-        \ .. line[strchars(cml_start, 1) + indent :]
-        \ .. (!empty(cml_end) ? ' ' : '') .. cml_end
+        \ .. cml_left
+        \ .. line[strchars(cml_left, 1) + indent :]
+        \ .. (!empty(cml_right) ? ' ' : '') .. cml_right
     " if  there are  already  marks on  the line  below/above,  don't add  a
     " new  line  with `append()`,  instead  replace  the current  line  with
     " `setline()`, merging its existing marks with the new ones
     let offset = (a:dir is# 'below' ? 1 : -1)
     let existing_line = (line('.') + offset)->getline()
-    if existing_line =~# '^\s*\V' .. escape(cml_start, '\') .. '\m[ v^-]*$'
+    if existing_line =~# '^\s*\V' .. escape(cml_left, '\') .. '\m[ v^-]*$'
         let line = s:merge_lines(line, existing_line)
         call setline(line('.') + offset, line)
         return
@@ -433,13 +427,7 @@ fu s:put_error_sign(_) abort "{{{2
         \ ? 'v'
         \ : '^'
     let vcol = virtcol('.')
-    if &ft is# 'markdown'
-        let cml = ''
-    elseif &ft is# 'vim'
-        let cml = s:isVim9Comment() ? '#' : '"'
-    else
-        let cml = matchstr(&l:cms, '\S*\ze\s*%s')
-    endif
+    let [cml, _] = s:getcml()
     let next_line = (line('.') + (s:put_error_sign_where is# 'above' ? -2 : 2))->getline()
 
     if next_line =~# ballot
@@ -548,8 +536,6 @@ fu s:put_error_sign(_) abort "{{{2
     " function, or outside?
     "}}}
 endfu
-" }}}1
-" Misc. {{{1
 fu s:mark_init() abort "{{{2
     if !exists('w:bd_marks.id')
         let w:bd_marks = {
@@ -599,8 +585,22 @@ fu s:update_coords() abort "{{{2
     endif
 endfu
 
+" }}}1
+" Util {{{1
+fu s:getcml() abort "{{{2
+    if &l:cms == '' || &ft is# 'markdown'
+        let [cml_left, cml_right] = ['', '']
+    elseif &ft is# 'vim'
+        let [cml_left, cml_right] = s:isVim9Comment() ? ['#', ''] : ['"', '']
+    else
+        let [cml_left, cml_right] = split(&l:cms, '%s', 1)
+    endif
+    return [cml_left, cml_right]
+endfu
+
 fu s:isVim9Comment() abort "{{{2
     return synstack('.', col('.'))
         \ ->map("synIDattr(v:val, 'name')")
-        \ ->match('vim9linecomment') != -1
+        \ ->match('vim9\%(line\)\=comment') != -1
 endfu
+
