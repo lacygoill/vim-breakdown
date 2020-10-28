@@ -1,3 +1,5 @@
+import IsVim9 from 'lg.vim'
+
 " Interface {{{1
 fu breakdown#mark() abort "{{{2
     " `w:bd_marks` may need to be initialized.
@@ -591,16 +593,10 @@ fu s:getcml() abort "{{{2
     if &l:cms == '' || &ft is# 'markdown'
         let [cml_left, cml_right] = ['', '']
     elseif &ft is# 'vim'
-        let [cml_left, cml_right] = s:isVim9Comment() ? ['#', ''] : ['"', '']
+        let [cml_left, cml_right] = s:IsVim9() ? ['#', ''] : ['"', '']
     else
         let [cml_left, cml_right] = split(&l:cms, '%s', 1)
     endif
     return [cml_left, cml_right]
-endfu
-
-fu s:isVim9Comment() abort "{{{2
-    return synstack('.', col('.'))
-        \ ->map("synIDattr(v:val, 'name')")
-        \ ->match('vim9\%(line\)\=comment') != -1
 endfu
 
