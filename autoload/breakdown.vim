@@ -510,7 +510,7 @@ fu s:put_error_sign(_) abort "{{{2
     "
     "     $ vim -Nu <(cat <<'EOF'
     "         set nosol
-    "         nno cd :call Func()<cr>
+    "         nno cd <cmd>call Func()<cr>
     "         fu Func() abort
     "            --,-d_
     "            call append(line('.') - 1, 'the date is:')

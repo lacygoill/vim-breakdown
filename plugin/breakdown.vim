@@ -3,14 +3,14 @@ if exists('g:loaded_breakdown')
 endif
 let g:loaded_breakdown = 1
 
-nno <silent><unique> m<cr> :<c-u>call breakdown#mark()<cr>
-nno <silent><unique> m<c-h> :<c-u>call breakdown#clear_match()<cr>
+nno <unique> m<cr> <cmd>call breakdown#mark()<cr>
+nno <unique> m<c-h> <cmd>call breakdown#clear_match()<cr>
 
-nno <silent><unique> m) :<c-u>call breakdown#expand('simple', 'above')<cr>
-nno <silent><unique> m} :<c-u>call breakdown#expand('simple', 'below')<cr>
+nno <unique> m) <cmd>call breakdown#expand('simple', 'above')<cr>
+nno <unique> m} <cmd>call breakdown#expand('simple', 'below')<cr>
 
-nno <silent><unique> m( :<c-u>call breakdown#expand('bucket', 'above')<cr>
-nno <silent><unique> m{ :<c-u>call breakdown#expand('bucket', 'below')<cr>
+nno <unique> m( <cmd>call breakdown#expand('bucket', 'above')<cr>
+nno <unique> m{ <cmd>call breakdown#expand('bucket', 'below')<cr>
 
 " Why not `+^`?{{{
 "
@@ -20,8 +20,8 @@ nno <silent><unique> m{ :<c-u>call breakdown#expand('bucket', 'below')<cr>
 nno <expr><unique> +v breakdown#put_error_sign_setup('below')
 nno <expr><unique> +V breakdown#put_error_sign_setup('above')
 
-xno <silent><unique> +v :call breakdown#put_v('below')<cr>
-xno <silent><unique> +V :call breakdown#put_v('above')<cr>
+xno <unique> +v <c-\><c-n><cmd>call breakdown#put_v('below')<cr>
+xno <unique> +V <c-\><c-n><cmd>call breakdown#put_v('above')<cr>
 
 " TODO: If possible, use `append()` or `setline()` instead of `:norm` to draw a diagram.  It's faster.
 
@@ -42,10 +42,10 @@ xno <silent><unique> +V :call breakdown#put_v('above')<cr>
 "
 " We would have to change the mappings like this:
 "
-" nno <silent> m(( :<c-u>call breakdown#main('bucket', 'above', 'before')<cr>
-" nno <silent> m() :<c-u>call breakdown#main('bucket', 'above', 'after')<cr>
-" nno <silent> m)( :<c-u>call breakdown#main('simple', 'above', 'before')<cr>
-" nno <silent> m)) :<c-u>call breakdown#main('simple', 'above', 'after')<cr>
+"     nno m(( <cmd>call breakdown#main('bucket', 'above', 'before')<cr>
+"     nno m() <cmd>call breakdown#main('bucket', 'above', 'after')<cr>
+"     nno m)( <cmd>call breakdown#main('simple', 'above', 'before')<cr>
+"     nno m)) <cmd>call breakdown#main('simple', 'above', 'after')<cr>
 "
 " And adapt `draw()` and `populate_loclist()`.
 "
