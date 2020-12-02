@@ -8,37 +8,9 @@ fu breakdown#mark() abort "{{{2
     call s:update_coords()
 
     " build a pattern using the coordinates in `w:bd_marks.coords`
-    let w:bd_marks.pat = deepcopy(w:bd_marks.coords)
-        \ ->map({_, v -> '\%' .. v.line .. 'l\%' .. v.col .. 'v.'})
+    let w:bd_marks.pat = mapnew(w:bd_marks.coords,
+        \ {_, v -> '\%' .. v.line .. 'l\%' .. v.col .. 'v.'})
         \ ->join('\|')
-    " When do we need to use `deepcopy()` instead of `copy()` ?{{{
-    "
-    " Every time  we need  to make  a copy of  the coordinates,  we have  to use
-    " `deepcopy()`.  We  can't use `copy()`,  because each  item in the  list of
-    " coordinates is  a dictionary, not just  a simple data structure  such as a
-    " number or a string.
-    "
-    " `copy()` would create a new list of coordinates, but whose items would
-    " share the same references as the ones in the original list.
-    "
-    " So, changing an item in the copy would immediately affect the original list.
-    "}}}
-    " Here, do we need `deepcopy()`?{{{
-    "
-    " Here, probably not.  But later, yes.
-    "
-    " Here,  we  don't change  any  key  of  the  dictionaries inside  the  list
-    " `w:bd_marks.coords`.   We simply  use each  dictionary to  build a  string
-    " which populates a list (the one returned by `map()`).
-    "
-    " Later, we  may update the 'line'  key of each dictionary  (happens when we
-    " expand the diagram above).
-    "}}}
-    "   Here, Why do you use it?{{{
-    "
-    "    1. better be safe than sorry
-    "    2. consistency (`deepcopy()` later → `deepcopy()` now)
-    "}}}
 
     " create a match and store its id in `w:bd_marks.id`
     let w:bd_marks.id = !empty(w:bd_marks.coords)
@@ -68,12 +40,12 @@ fu breakdown#expand(shape, dir) abort "{{{2
     "    - `'tw'` and `'wm'` don't break a long line
     "    - `'fdm'` doesn't make the edition slow in the middle of a big folded file
     "}}}
-    let opts_save = {
-        \ 've': &ve,
-        \ 'tw': &l:tw,
-        \ 'wm': &l:wm,
-        \ 'fdm': &l:fdm,
-        \ 'bufnr': bufnr('%'),
+    let opts_save = #{
+        \ ve: &ve,
+        \ tw: &l:tw,
+        \ wm: &l:wm,
+        \ fdm: &l:fdm,
+        \ bufnr: bufnr('%'),
         \ }
     set ve=all
     setl tw=0 wm=0 fdm=manual
