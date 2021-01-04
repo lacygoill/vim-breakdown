@@ -112,7 +112,7 @@ fu breakdown#expand(shape, dir) abort "{{{2
     " in  a markdown  buffer, because  a diagram  won't cause  errors there,  so
     " there's no need to
     if !empty(&l:cms) && index(['markdown', 'text'], &ft) == -1
-        let [cml_left, _] = s:getcml()
+        let [cml_left; _] = s:getcml()
         call s:comment(cml_left, 'left', dir, hm_to_draw)
     endif
 
@@ -203,7 +203,7 @@ fu breakdown#put_v(dir) abort "{{{2
     let indent = indent('.')
     let line = repeat(' ', indent)
         \ .. cml_left
-        \ .. line[strchars(cml_left, 1) + indent :]
+        \ .. line[strchars(cml_left, v:true) + indent :]
         \ .. (!empty(cml_right) ? ' ' : '') .. cml_right
     " if  there are  already  marks on  the line  below/above,  don't add  a
     " new  line  with `append()`,  instead  replace  the current  line  with
@@ -316,7 +316,7 @@ fu s:comment(what, where, dir, hm_to_draw) abort "{{{2
 endfu
 
 fu s:merge_lines(line, existing_line) abort "{{{2
-    let [longest, shortest] = strchars(a:line, 1) > strchars(a:existing_line, 1)
+    let [longest, shortest] = strchars(a:line, v:true) > strchars(a:existing_line, v:true)
         \ ? [a:line, a:existing_line]
         \ : [a:existing_line, a:line]
     let i = 0
@@ -401,7 +401,7 @@ fu s:put_error_sign(_) abort "{{{2
         \ ? 'v'
         \ : '^'
     let vcol = virtcol('.')
-    let [cml, _] = s:getcml()
+    let [cml; _] = s:getcml()
     let next_line = (line('.') + (s:put_error_sign_where is# 'above' ? -2 : 2))->getline()
 
     if next_line =~# ballot
@@ -409,12 +409,12 @@ fu s:put_error_sign(_) abort "{{{2
         " cells the  next substitutions  will fail, because  they will  target a
         " non-existing character;  need to prevent  that by appending  spaces if
         " needed
-        let next_line_length = strchars(next_line, 1)
+        let next_line_length = strchars(next_line, v:true)
         if vcol > next_line_length
             let next_line ..= repeat(' ', vcol - next_line_length)
         endif
 
-        let pat = '\%' .. vcol .. 'v' .. repeat('.', strchars(ballot, 1))
+        let pat = '\%' .. vcol .. 'v' .. repeat('.', strchars(ballot, v:true))
         let new_line = substitute(next_line, pat, ballot, '')
 
         if s:put_error_sign_where is# 'above'
@@ -425,7 +425,7 @@ fu s:put_error_sign(_) abort "{{{2
         endif
     else
         let indent = indent('.')
-        let spaces_between_cml_and_mark = repeat(' ', virtcol('.') - 1 - strchars(cml, 1) - indent)
+        let spaces_between_cml_and_mark = repeat(' ', virtcol('.') - 1 - strchars(cml, v:true) - indent)
         let indent = repeat(' ', indent)
         let new_line = indent .. cml .. spaces_between_cml_and_mark .. ballot
     endif
