@@ -306,7 +306,7 @@ def Comment(what: string, dir: number, hm_to_draw: number) #{{{2
     # iterate over the lines of the diagram
     for i in range(0, hm_to_draw)
         # move the cursor in the right direction
-        exe (dir == -1 ? '-' : '+')
+        exe ':' .. (dir == -1 ? '-' : '+')
 
         var rep: string = indent .. what
 
