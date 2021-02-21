@@ -14,7 +14,7 @@ def breakdown#mark() #{{{2
 
     # build a pattern using the coordinates in `w:bd_marks.coords`
     w:bd_marks.pat = mapnew(w:bd_marks.coords,
-        (_, v) => '\%' .. v.line .. 'l\%' .. v.col .. 'v.')
+        (_, v: dict<number>): string => '\%' .. v.line .. 'l\%' .. v.col .. 'v.')
         ->join('\|')
 
     # create a match and store its id in `w:bd_marks.id`
@@ -60,7 +60,8 @@ def breakdown#expand(arg_shape: string, arg_dir: string) #{{{2
 
     # we sort the coordinates according  to their column number, because there's
     # no guarantee that we marked the characters in order from left to right
-    sort(w:bd_marks.coords, (x, y) => x.col - y.col)
+    w:bd_marks.coords
+        ->sort((x: dict<number>, y: dict<number>): number => x.col - y.col)
 
     # In a  diagram containing  buckets, every  2 consecutive  marked characters
     # stand for one branch of the latter.
@@ -90,7 +91,7 @@ def breakdown#expand(arg_shape: string, arg_dir: string) #{{{2
     #}}}
     var coords_to_process: list<dict<number>> = deepcopy(w:bd_marks.coords)
     if arg_shape == 'bucket'
-        filter(coords_to_process, (i) => i % 2 == 0)
+        filter(coords_to_process, (i: number): bool => i % 2 == 0)
     endif
 
     # How Many lines of the diagram are still TO be DRAWn
@@ -185,7 +186,12 @@ def breakdown#putV(dir: string) #{{{2
     endif
     # we need `strdisplaywidth()` in case the line contains multicell characters, like tabs
     var line: string = getline('.')
-        ->substitute('.', (m) => ' '->repeat(strdisplaywidth(m[0], virtcol('.'))), 'g')
+        ->substitute(
+            '.',
+            (m: list<string>): string =>
+                ' '->repeat(strdisplaywidth(m[0], virtcol('.'))),
+            'g'
+            )
     var col1: number = min([virtcol("'<"), virtcol("'>")])
     var col2: number = max([virtcol("'<"), virtcol("'>")])
     # Describes all the characters which were visually selected.{{{
@@ -201,7 +207,12 @@ def breakdown#putV(dir: string) #{{{2
     line = substitute(line, pat, dir == 'below' ? '^' : 'v', 'g')
         ->substitute('\s*$', '', '')
     # `^---^` is nicer than `^^^^^`
-    line = substitute(line, '[v^]\zs.*\ze[v^]', (m) => repeat('-', len(m[0])), '')
+    line = substitute(
+        line,
+        '[v^]\zs.*\ze[v^]',
+        (m: list<string>): string => repeat('-', len(m[0])),
+        ''
+        )
     var cml_left: string
     var cml_right: string
     [cml_left, cml_right] = Getcml()
@@ -548,7 +559,7 @@ def UpdateCoords() #{{{2
         # re-adding it as a mark, remove it (toggle).
         if index(w:bd_marks.coords, {line: line('.'), col: virtcol('.')}) >= 0
             filter(w:bd_marks.coords,
-                (_, v) => v != {line: line('.'), col: virtcol('.')})
+                (_, v: dict<number>): bool => v != {line: line('.'), col: virtcol('.')})
 
         else
             # ... otherwise, add the current position to the list of coordinates
