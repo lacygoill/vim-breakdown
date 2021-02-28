@@ -98,7 +98,7 @@ def breakdown#expand(arg_shape: string, arg_dir: string) #{{{2
     var hm_to_draw: number = len(coords_to_process)
 
     # make sure the cursor is on the line containing marked characters
-    exe 'norm! ' .. w:bd_marks.coords[0].line .. 'G'
+    exe 'norm! ' .. w:bd_marks.coords[0]['line'] .. 'G'
 
     # open enough new lines to draw diagram
     repeat([''], hm_to_draw + 1)->append(line('.') + dir)
@@ -253,7 +253,7 @@ def DrawBucket(dir: number, hm_to_draw: number, coord: dict<number>) #{{{2
     # coordinates (`w:bd_marks.coords`)
     var i: number = index(w:bd_marks.coords, coord)
     # get the width of the `───` segment to draw above the item to describe
-    var w: number = w:bd_marks.coords[i + 1].col - coord.col - 1
+    var w: number = w:bd_marks.coords[i + 1]['col'] - coord.col - 1
 
     if dir == -1
         # draw `├───┐`
@@ -310,7 +310,7 @@ def Comment(what: string, dir: number, hm_to_draw: number) #{{{2
 
     # Before beginning commenting the lines of the diagram, make sure the cursor
     # is on the line we're describing.
-    exe 'norm! ' .. w:bd_marks.coords[0].line .. 'G'
+    exe 'norm! ' .. w:bd_marks.coords[0]['line'] .. 'G'
 
     var indent: string = repeat(' ', indent('.'))
 
@@ -386,10 +386,10 @@ def PopulateLoclist( #{{{2
 
         var i: number = index(w:bd_marks.coords, coord)
 
-        col = w:bd_marks.coords[i].col + (len(w:bd_marks.coords) / 2 - hm_to_draw) * 2 + 4
-        #     │                          │
-        #     │                          └ before `[└┌]`, there could be some `│`:
-        #     │                            add 2 bytes for each of them
+        col = w:bd_marks.coords[i]['col'] + (len(w:bd_marks.coords) / 2 - hm_to_draw) * 2 + 4
+        #     │                             │
+        #     │                             └ before `[└┌]`, there could be some `│`:
+        #     │                               add 2 bytes for each of them
         #     │
         #     └ byte index of the next marked character (the one above/below `[┤├]`)
         # NOTE:
@@ -553,7 +553,7 @@ enddef
 
 def UpdateCoords() #{{{2
     # If we're on the same line as the previous marked characters...
-    if !empty(w:bd_marks.coords) && line('.') == w:bd_marks.coords[0].line
+    if !empty(w:bd_marks.coords) && line('.') == w:bd_marks.coords[0]['line']
 
         # ... and  if the current  position is  already marked, then  instead of
         # re-adding it as a mark, remove it (toggle).
