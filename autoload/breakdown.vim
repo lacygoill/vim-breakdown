@@ -13,8 +13,9 @@ def breakdown#mark() #{{{2
     UpdateCoords()
 
     # build a pattern using the coordinates in `w:bd_marks.coords`
-    w:bd_marks.pat = mapnew(w:bd_marks.coords,
-        (_, v: dict<number>): string => '\%' .. v.line .. 'l\%' .. v.col .. 'v.')
+    w:bd_marks.pat = w:bd_marks.coords
+        ->mapnew((_, v: dict<number>): string =>
+            '\%' .. v.line .. 'l\%' .. v.col .. 'v.')
         ->join('\|')
 
     # create a match and store its id in `w:bd_marks.id`
@@ -91,7 +92,7 @@ def breakdown#expand(arg_shape: string, arg_dir: string) #{{{2
     #}}}
     var coords_to_process: list<dict<number>> = deepcopy(w:bd_marks.coords)
     if arg_shape == 'bucket'
-        filter(coords_to_process, (i: number): bool => i % 2 == 0)
+        coords_to_process->filter((i: number): bool => i % 2 == 0)
     endif
 
     # How Many lines of the diagram are still TO be DRAWn
@@ -190,8 +191,7 @@ def breakdown#putV(dir: string) #{{{2
             '.',
             (m: list<string>): string =>
                 ' '->repeat(strdisplaywidth(m[0], virtcol('.'))),
-            'g'
-            )
+            'g')
     var col1: number = min([virtcol("'<"), virtcol("'>")])
     var col2: number = max([virtcol("'<"), virtcol("'>")])
     # Describes all the characters which were visually selected.{{{
@@ -204,15 +204,15 @@ def breakdown#putV(dir: string) #{{{2
     #}}}
     var pat: string = '\%>' .. col1 .. 'v\%<' .. col2 .. 'v.'
         .. '\|\%' .. col1 .. 'v.\|\%' .. col2 .. 'v.'
-    line = substitute(line, pat, dir == 'below' ? '^' : 'v', 'g')
-        ->substitute('\s*$', '', '')
+    line = line
+            ->substitute(pat, dir == 'below' ? '^' : 'v', 'g')
+            ->substitute('\s*$', '', '')
     # `^---^` is nicer than `^^^^^`
-    line = substitute(
-        line,
-        '[v^]\zs.*\ze[v^]',
-        (m: list<string>): string => repeat('-', len(m[0])),
-        ''
-        )
+    line = line
+            ->substitute(
+                '[v^]\zs.*\ze[v^]',
+                (m: list<string>): string => repeat('-', len(m[0])),
+                '')
     var cml_left: string
     var cml_right: string
     [cml_left, cml_right] = Getcml()
@@ -226,7 +226,7 @@ def breakdown#putV(dir: string) #{{{2
     # `setline()`, merging its existing marks with the new ones
     var offset: number = (dir == 'below' ? 1 : -1)
     var existing_line: string = (line('.') + offset)->getline()
-    if existing_line =~ '^\s*\V' .. escape(cml_left, '\') .. '\m[ v^-]*$'
+    if existing_line =~ '^\s*' .. '\V' .. escape(cml_left, '\') .. '\m' .. '[ v^-]*$'
         line = MergeLines(line, existing_line)
         setline(line('.') + offset, line)
         return
@@ -413,7 +413,7 @@ def PopulateLoclist( #{{{2
         })
 enddef
 
-def PutErrorSign(_: any) #{{{2
+def PutErrorSign(_a: any) #{{{2
     var ballot: string = '✘'
     var checkmark: string = '✔'
     var pointer: string = put_error_sign_where == 'above'
@@ -421,8 +421,8 @@ def PutErrorSign(_: any) #{{{2
         : '^'
     var vcol: number = virtcol('.')
     var cml: string
-    var __: any
-    [cml; __] = Getcml()
+    var _: any
+    [cml; _] = Getcml()
     var next_line: string = (line('.') + (put_error_sign_where == 'above' ? -2 : 2))
         ->getline()
 
@@ -438,7 +438,7 @@ def PutErrorSign(_: any) #{{{2
         endif
 
         var pat: string = '\%' .. vcol .. 'v' .. repeat('.', strchars(ballot, true))
-        new_line = substitute(next_line, pat, ballot, '')
+        new_line = next_line->substitute(pat, ballot, '')
 
         if put_error_sign_where == 'above'
             keepj :--,-d _
@@ -457,11 +457,13 @@ def PutErrorSign(_: any) #{{{2
     if put_error_sign_where == 'above'
         var here: number = line('.') - 1
         append(here, new_line)
-        substitute(new_line, ballot .. '\|' .. checkmark, pointer, 'g')
+        new_line
+            ->substitute(ballot .. '\|' .. checkmark, pointer, 'g')
             ->append(here + 1)
     else
         var here: number = line('.')
-        substitute(new_line, ballot .. '\|' .. checkmark, pointer, 'g')
+        new_line
+            ->substitute(ballot .. '\|' .. checkmark, pointer, 'g')
             ->append(here)
         append(here + 1, new_line)
     endif
@@ -558,8 +560,9 @@ def UpdateCoords() #{{{2
         # ... and  if the current  position is  already marked, then  instead of
         # re-adding it as a mark, remove it (toggle).
         if index(w:bd_marks.coords, {line: line('.'), col: virtcol('.')}) >= 0
-            filter(w:bd_marks.coords,
-                (_, v: dict<number>): bool => v != {line: line('.'), col: virtcol('.')})
+            w:bd_marks.coords
+                ->filter((_, v: dict<number>): bool =>
+                    v != {line: line('.'), col: virtcol('.')})
 
         else
             # ... otherwise, add the current position to the list of coordinates
