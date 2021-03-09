@@ -211,7 +211,7 @@ def breakdown#putV(dir: string) #{{{2
     line = line
             ->substitute(
                 '[v^]\zs.*\ze[v^]',
-                (m: list<string>): string => repeat('-', len(m[0])),
+                (m: list<string>): string => repeat('-', strchars(m[0], true)),
                 '')
     var cml_left: string
     var cml_right: string
