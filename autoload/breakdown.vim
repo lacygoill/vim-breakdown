@@ -219,7 +219,7 @@ def breakdown#putV(dir: string) #{{{2
     var indent: number = indent('.')
     line = repeat(' ', indent)
         .. cml_left
-        .. line[strchars(cml_left, true) + indent :]
+        .. line[strchars(cml_left) + indent :]
         .. (!empty(cml_right) ? ' ' : '') .. cml_right
     # if  there are  already  marks on  the line  below/above,  don't add  a
     # new  line  with `append()`,  instead  replace  the current  line  with
